@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,12 +14,15 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
-import { useProfile } from '@/hooks/use-profile';
 import { getDisplayName } from '@/utils/get-display-name';
+import { getProfile } from '@/queries/profile/get-profile';
+import { createClient } from '@/utils/supabase/client';
 
 export const Profile: React.FC = () => {
   const { user, logout } = useAuth();
-  const { profile } = useProfile();
+  const supabase = createClient();
+  const { data: profile } = useQuery(getProfile(supabase));
+
   const router = useRouter();
 
   return (

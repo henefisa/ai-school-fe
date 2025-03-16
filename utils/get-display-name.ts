@@ -1,6 +1,8 @@
 import { Tables } from './supabase/database.types';
 
-export const getDisplayName = (profile: Tables<'profiles'> | null) => {
+export const getDisplayName = (
+  profile: Tables<'profiles'> | null | undefined
+) => {
   if (!profile) {
     return '';
   }

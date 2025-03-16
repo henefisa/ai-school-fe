@@ -43,8 +43,10 @@ import {
 import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
-import { useProfile } from '@/hooks/use-profile';
 import { getDisplayName } from '@/utils/get-display-name';
+import { getProfile } from '@/queries/profile/get-profile';
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { createClient } from '@/utils/supabase/client';
 
 // Define the form schema
 const profileFormSchema = z.object({
@@ -85,7 +87,8 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const supabase = createClient();
+  const { data: profile } = useQuery(getProfile(supabase));
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
