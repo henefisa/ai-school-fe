@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import {
   BarChart3Icon,
   BookOpenIcon,
@@ -19,226 +19,236 @@ import {
   UsersIcon,
   FileTextIcon,
   ClipboardCheckIcon,
-} from "lucide-react"
+} from 'lucide-react';
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
-  role?: "admin" | "teacher" | "parent" | "student"
+  role?: 'admin' | 'teacher' | 'parent' | 'student';
 }
 
-export function DashboardSidebar({ className, role = "admin", ...props }: SidebarNavProps) {
-  const pathname = usePathname()
+export function DashboardSidebar({
+  className,
+  role = 'admin',
+  ...props
+}: SidebarNavProps) {
+  const pathname = usePathname();
 
   // Define navigation items based on user role
   const getNavItems = () => {
     const commonItems = [
       {
-        name: "Dashboard",
-        href: "/dashboard",
+        name: 'Dashboard',
+        href: '/dashboard',
         icon: LayoutDashboardIcon,
       },
       {
-        name: "Calendar",
-        href: "/dashboard/calendar",
+        name: 'Calendar',
+        href: '/dashboard/calendar',
         icon: CalendarIcon,
       },
       {
-        name: "Messages",
-        href: "/dashboard/messages",
+        name: 'Messages',
+        href: '/dashboard/messages',
         icon: MessageSquareIcon,
       },
-    ]
+    ];
 
     const roleSpecificItems = {
       admin: [
         {
-          name: "Students",
-          href: "/dashboard/students",
+          name: 'Students',
+          href: '/dashboard/students',
           icon: GraduationCapIcon,
         },
         {
-          name: "Teachers",
-          href: "/dashboard/teachers",
+          name: 'Teachers',
+          href: '/dashboard/teachers',
           icon: UsersIcon,
         },
         {
-          name: "Courses",
-          href: "/dashboard/courses",
+          name: 'Courses',
+          href: '/dashboard/courses',
           icon: BookOpenIcon,
         },
         {
-          name: "Finance",
-          href: "/dashboard/finance",
+          name: 'Finance',
+          href: '/dashboard/finance',
           icon: CreditCardIcon,
         },
         {
-          name: "Reports",
-          href: "/dashboard/reports",
+          name: 'Reports',
+          href: '/dashboard/reports',
           icon: BarChart3Icon,
         },
         {
-          name: "Library",
-          href: "/dashboard/library",
+          name: 'Library',
+          href: '/dashboard/library',
           icon: LibraryIcon,
         },
       ],
       teacher: [
         {
-          name: "My Classes",
-          href: "/dashboard/classes",
+          name: 'My Classes',
+          href: '/dashboard/classes',
           icon: UsersIcon,
         },
         {
-          name: "Students",
-          href: "/dashboard/classes/students",
+          name: 'Students',
+          href: '/dashboard/classes/students',
           icon: GraduationCapIcon,
         },
         {
-          name: "Attendance",
-          href: "/dashboard/attendance",
+          name: 'Attendance',
+          href: '/dashboard/attendance',
           icon: ClipboardCheckIcon,
         },
         {
-          name: "Grades",
-          href: "/dashboard/grades",
+          name: 'Grades',
+          href: '/dashboard/grades',
           icon: BarChart3Icon,
         },
         {
-          name: "Lesson Plans",
-          href: "/dashboard/lessons",
+          name: 'Lesson Plans',
+          href: '/dashboard/lessons',
           icon: BookOpenIcon,
         },
         {
-          name: "Assignments",
-          href: "/dashboard/assignments",
+          name: 'Assignments',
+          href: '/dashboard/assignments',
           icon: FileTextIcon,
         },
       ],
       student: [
         {
-          name: "My Courses",
-          href: "/dashboard/courses",
+          name: 'My Courses',
+          href: '/dashboard/courses',
           icon: BookOpenIcon,
         },
         {
-          name: "Assignments",
-          href: "/dashboard/my-assignments",
+          name: 'Assignments',
+          href: '/dashboard/my-assignments',
           icon: FileTextIcon,
         },
         {
-          name: "My Lessons",
-          href: "/dashboard/my-lessons",
+          name: 'My Lessons',
+          href: '/dashboard/my-lessons',
           icon: BookOpenIcon,
         },
         {
-          name: "Grades",
-          href: "/dashboard/grades",
+          name: 'Grades',
+          href: '/dashboard/grades',
           icon: BarChart3Icon,
         },
         {
-          name: "Library",
-          href: "/dashboard/library",
+          name: 'Library',
+          href: '/dashboard/library',
           icon: LibraryIcon,
         },
         {
-          name: "Attendance",
-          href: "/dashboard/attendance",
+          name: 'Attendance',
+          href: '/dashboard/attendance',
           icon: ClipboardCheckIcon,
         },
       ],
       parent: [
         {
-          name: "My Children",
-          href: "/dashboard/children",
+          name: 'My Children',
+          href: '/dashboard/children',
           icon: UsersIcon,
         },
         {
-          name: "Attendance",
-          href: "/dashboard/attendance",
+          name: 'Attendance',
+          href: '/dashboard/attendance',
           icon: ClipboardCheckIcon,
         },
         {
-          name: "Grades",
-          href: "/dashboard/grades",
+          name: 'Grades',
+          href: '/dashboard/grades',
           icon: BarChart3Icon,
         },
         {
-          name: "Fees",
-          href: "/dashboard/fees",
+          name: 'Fees',
+          href: '/dashboard/fees',
           icon: CreditCardIcon,
         },
         {
-          name: "School Events",
-          href: "/dashboard/events",
+          name: 'School Events',
+          href: '/dashboard/events',
           icon: CalendarIcon,
         },
       ],
-    }
+    };
 
     const settingsItem = [
       {
-        name: "Settings",
-        href: "/dashboard/settings",
+        name: 'Settings',
+        href: '/dashboard/settings',
         icon: SettingsIcon,
       },
-    ]
+    ];
 
     return [
       ...commonItems,
-      { type: "separator", name: "Main Menu" },
+      { type: 'separator', name: 'Main Menu' },
       ...roleSpecificItems[role],
-      { type: "separator", name: "Preferences" },
+      { type: 'separator', name: 'Preferences' },
       ...settingsItem,
-    ]
-  }
+    ];
+  };
 
-  const navItems = getNavItems()
+  const navItems = getNavItems();
 
   return (
-    <div className={cn("h-full", className)} {...props}>
-      <div className="flex h-full flex-col">
-        <div className="flex h-14 items-center border-b px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <SchoolIcon className="h-6 w-6 text-primary" />
-            <h2 className="text-lg font-semibold tracking-tight">EduManage</h2>
+    <div className={cn('h-full', className)} {...props}>
+      <div className='flex h-full flex-col'>
+        <div className='flex h-14 items-center border-b px-4'>
+          <Link href='/dashboard' className='flex items-center gap-2'>
+            <SchoolIcon className='h-6 w-6 text-primary' />
+            <h2 className='text-lg font-semibold tracking-tight'>EduManage</h2>
           </Link>
         </div>
-        <div className="flex-1 overflow-auto py-2">
-          <nav className="grid gap-1 px-2">
+        <div className='flex-1 overflow-auto py-2'>
+          <nav className='grid gap-1 px-2'>
             {navItems.map((item, index) => {
-              if (item.type === "separator") {
+              if (item.type === 'separator') {
                 return (
-                  <div key={index} className="my-2">
-                    <div className="mb-2 px-4 text-xs font-semibold text-muted-foreground">{item.name}</div>
-                    <div className="h-px bg-border" />
+                  <div key={index} className='my-2'>
+                    <div className='mb-2 px-4 text-xs font-semibold text-muted-foreground'>
+                      {item.name}
+                    </div>
+                    <div className='h-px bg-border' />
                   </div>
-                )
+                );
               }
 
-              const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+              const isActive =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                    isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-primary",
+                    'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
+                    isActive
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:text-primary',
                   )}
                 >
                   <item.icon
                     className={cn(
-                      "h-5 w-5",
-                      isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary",
+                      'h-5 w-5',
+                      isActive
+                        ? 'text-primary'
+                        : 'text-muted-foreground group-hover:text-primary',
                     )}
                   />
                   {item.name}
                 </Link>
-              )
+              );
             })}
           </nav>
         </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -305,7 +305,7 @@ export default function PaymentRemindersPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Overdue</SelectItem>
-                <SelectItem value="critical">Critical (>14 days)</SelectItem>
+                <SelectItem value="critical">Critical (&gt;14 days)</SelectItem>
                 <SelectItem value="moderate">Moderate (8-14 days)</SelectItem>
                 <SelectItem value="recent">Recent (≤7 days)</SelectItem>
               </SelectContent>
