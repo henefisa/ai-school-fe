@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -42,8 +41,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import { useProfile } from '@/hooks/use-profile';
+import { getDisplayName } from '@/utils/get-display-name';
 
 // Define the form schema
 const profileFormSchema = z.object({
@@ -84,13 +85,13 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const router = useRouter();
+  const { profile } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   // Mock data for the profile
   const defaultValues: Partial<ProfileFormValues> = {
-    name: user?.name || '',
+    name: getDisplayName(profile),
     email: user?.email || '',
     phone: '(555) 123-4567',
     dob: new Date('1990-01-01'),
@@ -145,6 +146,10 @@ export default function ProfilePage() {
     }, 1500);
   }
 
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, [user, profile]);
+
   return (
     <div className='container mx-auto py-6'>
       <div className='mb-6 flex items-center justify-between'>
@@ -172,14 +177,11 @@ export default function ProfilePage() {
             <div className='relative mb-4'>
               <Avatar className='h-32 w-32'>
                 <AvatarImage
-                  src={user?.avatar || '/placeholder.svg'}
-                  alt={user?.name}
+                  src={'/placeholder.svg'}
+                  alt={getDisplayName(profile)}
                 />
                 <AvatarFallback className='text-3xl'>
-                  {user?.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')}
+                  {getDisplayName(profile)[0]}
                 </AvatarFallback>
               </Avatar>
               {isEditing && (
@@ -200,7 +202,9 @@ export default function ProfilePage() {
               )}
             </div>
             <div className='text-center'>
-              <h3 className='text-xl font-semibold'>{user?.name}</h3>
+              <h3 className='text-xl font-semibold'>
+                {getDisplayName(profile)}
+              </h3>
               <p className='text-sm text-muted-foreground capitalize'>
                 {user?.role}
               </p>
@@ -211,7 +215,7 @@ export default function ProfilePage() {
               <div className='rounded-md bg-muted p-2'>
                 <p className='text-sm font-medium'>ID</p>
                 <p className='text-xs text-muted-foreground'>
-                  STU-{user?.id || '001'}
+                  {user?.id || '001'}
                 </p>
               </div>
               <div className='rounded-md bg-muted p-2'>
@@ -315,7 +319,7 @@ export default function ProfilePage() {
                                     variant={'outline'}
                                     className={cn(
                                       'w-full pl-3 text-left font-normal',
-                                      !field.value && 'text-muted-foreground',
+                                      !field.value && 'text-muted-foreground'
                                     )}
                                   >
                                     {field.value ? (

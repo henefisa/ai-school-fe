@@ -1,10 +1,9 @@
 'use client';
 
 import type React from 'react';
-
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,29 +14,62 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { SchoolIcon, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { createClient } from '@/utils/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+const formSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email'),
+  password: z.string().min(1, 'Password is required'),
+});
 
 export default function LoginPage() {
+  const supabase = createClient();
   const router = useRouter();
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await login(email, password);
+      setIsLoading(true);
+
+      const { email, password } = values;
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast({
+          title: 'Error',
+          variant: 'destructive',
+          description: error.message,
+        });
+
+        return;
+      }
+
       router.push('/dashboard');
-    } catch (err) {
-      setError('Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -57,72 +89,70 @@ export default function LoginPage() {
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className='space-y-4'>
-            {error && (
-              <Alert variant='destructive'>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input
-                id='email'
-                type='email'
-                placeholder='m@example.com'
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className='space-y-4'>
+              <FormField
+                control={form.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='email'
+                        placeholder='m@example.com'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Try: admin@example.com, teacher@example.com,
+                      parent@example.com, or student@example.com
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              <p className='text-xs text-muted-foreground'>
-                Try: admin@example.com, teacher@example.com, parent@example.com,
-                or student@example.com
-              </p>
-            </div>
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between'>
-                <Label htmlFor='password'>Password</Label>
+              <FormField
+                control={form.control}
+                name='password'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type='password' {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Any password will work for demo purposes
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter className='flex flex-col space-y-4'>
+              <Button type='submit' className='w-full' disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </Button>
+              <div className='text-center text-sm'>
+                Don&apos;t have an account?{' '}
                 <Link
-                  href='/auth/forgot-password'
-                  className='text-sm text-primary underline-offset-4 hover:underline'
+                  href='/auth/register'
+                  className='text-primary underline-offset-4 hover:underline'
                 >
-                  Forgot password?
+                  Sign up
                 </Link>
               </div>
-              <Input
-                id='password'
-                type='password'
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <p className='text-xs text-muted-foreground'>
-                Any password will work for demo purposes
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter className='flex flex-col space-y-4'>
-            <Button type='submit' className='w-full' disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Logging in...
-                </>
-              ) : (
-                'Login'
-              )}
-            </Button>
-            <div className='text-center text-sm'>
-              Don&apos;t have an account?{' '}
-              <Link
-                href='/auth/register'
-                className='text-primary underline-offset-4 hover:underline'
-              >
-                Sign up
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
+            </CardFooter>
+          </form>
+        </Form>
       </Card>
     </div>
   );

@@ -21,16 +21,12 @@ import {
   ClipboardCheckIcon,
 } from 'lucide-react';
 
-interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
-  role?: 'admin' | 'teacher' | 'parent' | 'student';
-}
+interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export function DashboardSidebar({
-  className,
-  role = 'admin',
-  ...props
-}: SidebarNavProps) {
+export function DashboardSidebar({ className, ...props }: SidebarNavProps) {
   const pathname = usePathname();
+
+  const role = 'admin'; // Replace with actual user role
 
   // Define navigation items based on user role
   const getNavItems = () => {
@@ -231,7 +227,7 @@ export function DashboardSidebar({
                     'group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
                     isActive
                       ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-primary',
+                      : 'text-muted-foreground hover:text-primary'
                   )}
                 >
                   <item.icon
@@ -239,7 +235,7 @@ export function DashboardSidebar({
                       'h-5 w-5',
                       isActive
                         ? 'text-primary'
-                        : 'text-muted-foreground group-hover:text-primary',
+                        : 'text-muted-foreground group-hover:text-primary'
                     )}
                   />
                   {item.name}
