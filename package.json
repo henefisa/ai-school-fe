@@ -76,6 +76,7 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "core-js-pure",
       "sharp"
     ]
   }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,11 +23,34 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Calendar, MessageSquare, Search, User } from 'lucide-react';
+import {
+  Calendar,
+  MessageSquare,
+  Search,
+  User,
+  FileText,
+  Clock,
+} from 'lucide-react';
 
 export default function ChildrenPage() {
-  const [selectedChild, setSelectedChild] = useState<number>(1);
+  const searchParams = useSearchParams();
+  const childIdParam = searchParams.get('child');
+  const tabParam = searchParams.get('tab');
+
+  const [selectedChild, setSelectedChild] = useState<number>(
+    childIdParam ? Number.parseInt(childIdParam) : 1
+  );
+  const [activeTab, setActiveTab] = useState<string>(tabParam || 'grades');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (childIdParam) {
+      setSelectedChild(Number.parseInt(childIdParam));
+    }
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [childIdParam, tabParam]);
 
   // Sample children data
   const children = [
@@ -42,6 +66,33 @@ export default function ChildrenPage() {
         newGrades: 2,
         upcomingAssignments: 3,
       },
+      teachers: [
+        {
+          name: 'Dr. Robert Chen',
+          subject: 'Mathematics',
+          email: 'robert.chen@school.edu',
+        },
+        {
+          name: 'Sarah Johnson',
+          subject: 'English Literature',
+          email: 'sarah.johnson@school.edu',
+        },
+        {
+          name: 'Michael Williams',
+          subject: 'Biology',
+          email: 'michael.williams@school.edu',
+        },
+        {
+          name: 'Emily Davis',
+          subject: 'World History',
+          email: 'emily.davis@school.edu',
+        },
+        {
+          name: 'David Martinez',
+          subject: 'Computer Science',
+          email: 'david.martinez@school.edu',
+        },
+      ],
     },
     {
       id: 2,
@@ -55,6 +106,33 @@ export default function ChildrenPage() {
         newGrades: 1,
         upcomingAssignments: 2,
       },
+      teachers: [
+        {
+          name: 'Sarah Johnson',
+          subject: 'English Literature',
+          email: 'sarah.johnson@school.edu',
+        },
+        {
+          name: 'James Wilson',
+          subject: 'Mathematics',
+          email: 'james.wilson@school.edu',
+        },
+        {
+          name: 'Jennifer Brown',
+          subject: 'Science',
+          email: 'jennifer.brown@school.edu',
+        },
+        {
+          name: 'Thomas Anderson',
+          subject: 'History',
+          email: 'thomas.anderson@school.edu',
+        },
+        {
+          name: 'Lisa Garcia',
+          subject: 'Art',
+          email: 'lisa.garcia@school.edu',
+        },
+      ],
     },
   ];
 
@@ -92,6 +170,94 @@ export default function ChildrenPage() {
     },
   ];
 
+  // Sample detailed grades data
+  const detailedGrades = [
+    {
+      subject: 'Mathematics',
+      assignments: [
+        {
+          name: 'Algebra Quiz 1',
+          score: 92,
+          maxScore: 100,
+          weight: '10%',
+          date: 'Feb 10, 2025',
+        },
+        {
+          name: 'Algebra Assignment 1',
+          score: 88,
+          maxScore: 100,
+          weight: '15%',
+          date: 'Feb 15, 2025',
+        },
+        {
+          name: 'Algebra Midterm',
+          score: 90,
+          maxScore: 100,
+          weight: '30%',
+          date: 'Mar 1, 2025',
+        },
+      ],
+      average: 90,
+      grade: 'A',
+    },
+    {
+      subject: 'English Literature',
+      assignments: [
+        {
+          name: 'Essay on Shakespeare',
+          score: 85,
+          maxScore: 100,
+          weight: '20%',
+          date: 'Feb 12, 2025',
+        },
+        {
+          name: 'Reading Comprehension',
+          score: 88,
+          maxScore: 100,
+          weight: '15%',
+          date: 'Feb 20, 2025',
+        },
+        {
+          name: 'Literature Analysis',
+          score: 92,
+          maxScore: 100,
+          weight: '25%',
+          date: 'Mar 5, 2025',
+        },
+      ],
+      average: 88.5,
+      grade: 'A-',
+    },
+    {
+      subject: 'Biology',
+      assignments: [
+        {
+          name: 'Cell Structure Quiz',
+          score: 85,
+          maxScore: 100,
+          weight: '10%',
+          date: 'Feb 8, 2025',
+        },
+        {
+          name: 'Lab Report: Photosynthesis',
+          score: 88,
+          maxScore: 100,
+          weight: '20%',
+          date: 'Feb 18, 2025',
+        },
+        {
+          name: 'Biology Midterm',
+          score: 82,
+          maxScore: 100,
+          weight: '30%',
+          date: 'Mar 3, 2025',
+        },
+      ],
+      average: 84.3,
+      grade: 'B+',
+    },
+  ];
+
   // Sample attendance data
   const attendanceData = [
     { date: '2025-03-15', status: 'Present' },
@@ -113,12 +279,16 @@ export default function ChildrenPage() {
       subject: 'Mathematics',
       dueDate: '2025-03-20',
       status: 'Pending',
+      description: 'Complete problems 1-20 on page 45 of the textbook.',
+      teacher: 'Dr. Robert Chen',
     },
     {
       title: 'Essay on Shakespeare',
       subject: 'English Literature',
       dueDate: '2025-03-22',
       status: 'Submitted',
+      description: 'Write a 1000-word essay analyzing the themes in Hamlet.',
+      teacher: 'Sarah Johnson',
     },
     {
       title: 'Lab Report: Photosynthesis',
@@ -126,12 +296,17 @@ export default function ChildrenPage() {
       dueDate: '2025-03-18',
       status: 'Graded',
       grade: 'A-',
+      description:
+        'Write a lab report on the photosynthesis experiment conducted in class.',
+      teacher: 'Michael Williams',
     },
     {
       title: 'World War II Research',
       subject: 'World History',
       dueDate: '2025-03-25',
       status: 'Pending',
+      description: 'Research and present on a specific aspect of World War II.',
+      teacher: 'Emily Davis',
     },
   ];
 
@@ -143,7 +318,7 @@ export default function ChildrenPage() {
   ];
 
   const selectedChildData = children.find(
-    (child) => child.id === selectedChild,
+    (child) => child.id === selectedChild
   );
 
   return (
@@ -179,7 +354,9 @@ export default function ChildrenPage() {
               {children.map((child) => (
                 <div
                   key={child.id}
-                  className={`flex items-center gap-4 p-3 rounded-md cursor-pointer hover:bg-muted ${selectedChild === child.id ? 'bg-muted' : ''}`}
+                  className={`flex items-center gap-4 p-3 rounded-md cursor-pointer hover:bg-muted ${
+                    selectedChild === child.id ? 'bg-muted' : ''
+                  }`}
                   onClick={() => setSelectedChild(child.id)}
                 >
                   <Avatar className='h-10 w-10'>
@@ -298,12 +475,13 @@ export default function ChildrenPage() {
               </Card>
 
               {/* Detailed Information Tabs */}
-              <Tabs defaultValue='grades'>
+              <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
                 <TabsList>
                   <TabsTrigger value='grades'>Grades</TabsTrigger>
                   <TabsTrigger value='attendance'>Attendance</TabsTrigger>
                   <TabsTrigger value='assignments'>Assignments</TabsTrigger>
                   <TabsTrigger value='calendar'>Calendar</TabsTrigger>
+                  <TabsTrigger value='teachers'>Teachers</TabsTrigger>
                 </TabsList>
 
                 {/* Grades Tab */}
@@ -340,8 +518,8 @@ export default function ChildrenPage() {
                                     grade.currentGrade.startsWith('A')
                                       ? 'default'
                                       : grade.currentGrade.startsWith('B')
-                                        ? 'secondary'
-                                        : 'outline'
+                                      ? 'secondary'
+                                      : 'outline'
                                   }
                                 >
                                   {grade.currentGrade}
@@ -350,7 +528,15 @@ export default function ChildrenPage() {
                               <TableCell>{grade.teacher}</TableCell>
                               <TableCell>{grade.lastUpdated}</TableCell>
                               <TableCell className='text-right'>
-                                <Button variant='ghost' size='sm'>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() => {
+                                    document
+                                      .getElementById(`grade-details-${index}`)
+                                      ?.scrollIntoView({ behavior: 'smooth' });
+                                  }}
+                                >
                                   View Details
                                 </Button>
                               </TableCell>
@@ -358,6 +544,73 @@ export default function ChildrenPage() {
                           ))}
                         </TableBody>
                       </Table>
+
+                      {/* Detailed Grade Breakdown */}
+                      <div className='mt-8 space-y-6'>
+                        <h3 className='text-lg font-semibold'>
+                          Detailed Grade Breakdown
+                        </h3>
+                        {detailedGrades.map((subject, index) => (
+                          <div
+                            key={index}
+                            id={`grade-details-${index}`}
+                            className='border rounded-lg p-4'
+                          >
+                            <div className='flex items-center justify-between mb-4'>
+                              <div>
+                                <h4 className='text-md font-medium'>
+                                  {subject.subject}
+                                </h4>
+                                <p className='text-sm text-muted-foreground'>
+                                  Current Grade: {subject.grade} (
+                                  {subject.average}%)
+                                </p>
+                              </div>
+                              <Badge
+                                variant={
+                                  subject.grade.startsWith('A')
+                                    ? 'default'
+                                    : subject.grade.startsWith('B')
+                                    ? 'secondary'
+                                    : 'outline'
+                                }
+                              >
+                                {subject.grade}
+                              </Badge>
+                            </div>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Assignment</TableHead>
+                                  <TableHead>Score</TableHead>
+                                  <TableHead>Weight</TableHead>
+                                  <TableHead>Date</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {subject.assignments.map((assignment, idx) => (
+                                  <TableRow key={idx}>
+                                    <TableCell className='font-medium'>
+                                      {assignment.name}
+                                    </TableCell>
+                                    <TableCell>
+                                      {assignment.score}/{assignment.maxScore} (
+                                      {Math.round(
+                                        (assignment.score /
+                                          assignment.maxScore) *
+                                          100
+                                      )}
+                                      %)
+                                    </TableCell>
+                                    <TableCell>{assignment.weight}</TableCell>
+                                    <TableCell>{assignment.date}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        ))}
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -440,8 +693,8 @@ export default function ChildrenPage() {
                                     record.status === 'Present'
                                       ? 'outline'
                                       : record.status === 'Absent'
-                                        ? 'destructive'
-                                        : 'secondary'
+                                      ? 'destructive'
+                                      : 'secondary'
                                   }
                                 >
                                   {record.status}
@@ -487,7 +740,7 @@ export default function ChildrenPage() {
                               <TableCell>{assignment.subject}</TableCell>
                               <TableCell>
                                 {new Date(
-                                  assignment.dueDate,
+                                  assignment.dueDate
                                 ).toLocaleDateString()}
                               </TableCell>
                               <TableCell>
@@ -496,8 +749,8 @@ export default function ChildrenPage() {
                                     assignment.status === 'Pending'
                                       ? 'default'
                                       : assignment.status === 'Submitted'
-                                        ? 'secondary'
-                                        : 'outline'
+                                      ? 'secondary'
+                                      : 'outline'
                                   }
                                 >
                                   {assignment.status}
@@ -505,7 +758,17 @@ export default function ChildrenPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className='text-right'>
-                                <Button variant='ghost' size='sm'>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() => {
+                                    document
+                                      .getElementById(
+                                        `assignment-details-${index}`
+                                      )
+                                      ?.scrollIntoView({ behavior: 'smooth' });
+                                  }}
+                                >
                                   View Details
                                 </Button>
                               </TableCell>
@@ -513,6 +776,74 @@ export default function ChildrenPage() {
                           ))}
                         </TableBody>
                       </Table>
+
+                      {/* Assignment Details */}
+                      <div className='mt-8 space-y-6'>
+                        <h3 className='text-lg font-semibold'>
+                          Assignment Details
+                        </h3>
+                        {assignments.map((assignment, index) => (
+                          <div
+                            key={index}
+                            id={`assignment-details-${index}`}
+                            className='border rounded-lg p-4'
+                          >
+                            <div className='flex items-center justify-between mb-2'>
+                              <h4 className='text-md font-medium'>
+                                {assignment.title}
+                              </h4>
+                              <Badge
+                                variant={
+                                  assignment.status === 'Pending'
+                                    ? 'default'
+                                    : assignment.status === 'Submitted'
+                                    ? 'secondary'
+                                    : 'outline'
+                                }
+                              >
+                                {assignment.status}
+                                {assignment.grade && ` (${assignment.grade})`}
+                              </Badge>
+                            </div>
+                            <div className='grid gap-2 md:grid-cols-3 mb-4 text-sm'>
+                              <div>
+                                <span className='font-medium'>Subject:</span>{' '}
+                                {assignment.subject}
+                              </div>
+                              <div>
+                                <span className='font-medium'>Due Date:</span>{' '}
+                                {new Date(
+                                  assignment.dueDate
+                                ).toLocaleDateString()}
+                              </div>
+                              <div>
+                                <span className='font-medium'>Teacher:</span>{' '}
+                                {assignment.teacher}
+                              </div>
+                            </div>
+                            <div className='mb-4'>
+                              <h5 className='text-sm font-medium mb-1'>
+                                Description:
+                              </h5>
+                              <p className='text-sm text-muted-foreground'>
+                                {assignment.description}
+                              </p>
+                            </div>
+                            <div className='flex justify-end gap-2'>
+                              <Button variant='outline' size='sm'>
+                                <FileText className='mr-2 h-4 w-4' />
+                                View Assignment
+                              </Button>
+                              {assignment.status === 'Pending' && (
+                                <Button size='sm'>
+                                  <Clock className='mr-2 h-4 w-4' />
+                                  Set Reminder
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </CardContent>
                   </Card>
                 </TabsContent>
@@ -543,6 +874,64 @@ export default function ChildrenPage() {
                               </p>
                             </div>
                             <Badge variant='outline'>{event.type}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                      <div className='mt-6 border rounded-lg p-4 text-center'>
+                        <p className='text-muted-foreground mb-4'>
+                          View the full school calendar for more events and
+                          important dates
+                        </p>
+                        <Button>
+                          <Calendar className='mr-2 h-4 w-4' />
+                          View Full Calendar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Teachers Tab */}
+                <TabsContent value='teachers' className='space-y-4'>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Teachers</CardTitle>
+                      <CardDescription>
+                        Contact information for your child's teachers
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className='space-y-4'>
+                        {selectedChildData.teachers.map((teacher, index) => (
+                          <div
+                            key={index}
+                            className='flex items-center justify-between border-b pb-4 last:border-0 last:pb-0'
+                          >
+                            <div className='flex items-center gap-4'>
+                              <Avatar className='h-10 w-10'>
+                                <AvatarFallback>
+                                  {teacher.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className='font-medium'>{teacher.name}</p>
+                                <p className='text-sm text-muted-foreground'>
+                                  {teacher.subject}
+                                </p>
+                              </div>
+                            </div>
+                            <div className='flex gap-2'>
+                              <Button variant='outline' size='sm'>
+                                <MessageSquare className='mr-2 h-4 w-4' />
+                                Message
+                              </Button>
+                              <Button variant='ghost' size='sm'>
+                                View Profile
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>

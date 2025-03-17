@@ -19,14 +19,19 @@ import {
   UsersIcon,
   FileTextIcon,
   ClipboardCheckIcon,
+  BellIcon,
 } from 'lucide-react';
 
-interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
+  role?: 'admin' | 'teacher' | 'parent' | 'student';
+}
 
-export function DashboardSidebar({ className, ...props }: SidebarNavProps) {
+export function DashboardSidebar({
+  className,
+  role = 'parent',
+  ...props
+}: SidebarNavProps) {
   const pathname = usePathname();
-
-  const role = 'admin'; // Replace with actual user role
 
   // Define navigation items based on user role
   const getNavItems = () => {
@@ -167,9 +172,9 @@ export function DashboardSidebar({ className, ...props }: SidebarNavProps) {
           icon: CreditCardIcon,
         },
         {
-          name: 'School Events',
-          href: '/dashboard/events',
-          icon: CalendarIcon,
+          name: 'Announcements',
+          href: '/dashboard/announcements',
+          icon: BellIcon,
         },
       ],
     };

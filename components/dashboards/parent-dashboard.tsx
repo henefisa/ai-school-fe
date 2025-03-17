@@ -9,12 +9,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import {
   CalendarIcon,
   CreditCardIcon,
-  BellIcon,
   MessageSquareIcon,
+  BookOpenIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ParentDashboard() {
   // Sample children data
@@ -79,6 +81,34 @@ export default function ParentDashboard() {
     },
   ];
 
+  // Sample announcements
+  const announcements = [
+    {
+      id: 1,
+      title: 'School Closure - Spring Break',
+      content:
+        'The school will be closed for Spring Break from April 10-17, 2025.',
+      date: 'Mar 15, 2025',
+      priority: 'high',
+    },
+    {
+      id: 2,
+      title: 'New Library Resources Available',
+      content:
+        "We've added new digital resources to our library. Students can now access e-books and research materials online.",
+      date: 'Mar 12, 2025',
+      priority: 'medium',
+    },
+    {
+      id: 3,
+      title: 'Sports Day Announcement',
+      content:
+        'Annual Sports Day will be held on April 25, 2025. All parents are invited to attend.',
+      date: 'Mar 10, 2025',
+      priority: 'medium',
+    },
+  ];
+
   return (
     <div className='space-y-6'>
       <div>
@@ -89,10 +119,47 @@ export default function ParentDashboard() {
         </p>
       </div>
 
+      {/* Quick Actions */}
+      <div className='grid gap-4 md:grid-cols-4'>
+        <Link href='/dashboard/children'>
+          <Card className='hover:bg-accent/50 transition-colors cursor-pointer'>
+            <CardContent className='p-4 flex flex-col items-center justify-center text-center h-24'>
+              <BookOpenIcon className='h-6 w-6 mb-2 text-primary' />
+              <p className='text-sm font-medium'>View Children</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href='/dashboard/messages'>
+          <Card className='hover:bg-accent/50 transition-colors cursor-pointer'>
+            <CardContent className='p-4 flex flex-col items-center justify-center text-center h-24'>
+              <MessageSquareIcon className='h-6 w-6 mb-2 text-primary' />
+              <p className='text-sm font-medium'>Message Teachers</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href='/dashboard/fees'>
+          <Card className='hover:bg-accent/50 transition-colors cursor-pointer'>
+            <CardContent className='p-4 flex flex-col items-center justify-center text-center h-24'>
+              <CreditCardIcon className='h-6 w-6 mb-2 text-primary' />
+              <p className='text-sm font-medium'>Pay Fees</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href='/dashboard/calendar'>
+          <Card className='hover:bg-accent/50 transition-colors cursor-pointer'>
+            <CardContent className='p-4 flex flex-col items-center justify-center text-center h-24'>
+              <CalendarIcon className='h-6 w-6 mb-2 text-primary' />
+              <p className='text-sm font-medium'>School Calendar</p>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Children Overview */}
       <div className='grid gap-6 md:grid-cols-2'>
         {children.map((child) => (
-          <Card key={child.id}>
-            <CardHeader className='flex flex-row items-center gap-4 pb-2'>
+          <Card key={child.id} className='overflow-hidden'>
+            <CardHeader className='flex flex-row items-center gap-4 pb-2 bg-muted/50'>
               <Avatar className='h-12 w-12'>
                 <AvatarImage src={child.avatar} alt={child.name} />
                 <AvatarFallback>
@@ -102,12 +169,19 @@ export default function ParentDashboard() {
                     .join('')}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <CardTitle>{child.name}</CardTitle>
+              <div className='flex-1'>
+                <CardTitle className='flex items-center justify-between'>
+                  {child.name}
+                  <Link href={`/dashboard/children?child=${child.id}`}>
+                    <Button size='sm' variant='outline'>
+                      View Details
+                    </Button>
+                  </Link>
+                </CardTitle>
                 <CardDescription>Grade {child.grade}</CardDescription>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className='p-4'>
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
                   <div className='flex items-center justify-between'>
@@ -128,19 +202,87 @@ export default function ParentDashboard() {
                   <Progress value={child.gpa * 25} className='h-2' />
                 </div>
               </div>
+              <div className='mt-4 grid grid-cols-3 gap-2'>
+                <Link href={`/dashboard/children?child=${child.id}&tab=grades`}>
+                  <div className='rounded-md bg-muted p-2 text-center hover:bg-accent/50 transition-colors cursor-pointer'>
+                    <p className='text-xs font-medium'>Grades</p>
+                  </div>
+                </Link>
+                <Link
+                  href={`/dashboard/children?child=${child.id}&tab=attendance`}
+                >
+                  <div className='rounded-md bg-muted p-2 text-center hover:bg-accent/50 transition-colors cursor-pointer'>
+                    <p className='text-xs font-medium'>Attendance</p>
+                  </div>
+                </Link>
+                <Link
+                  href={`/dashboard/children?child=${child.id}&tab=assignments`}
+                >
+                  <div className='rounded-md bg-muted p-2 text-center hover:bg-accent/50 transition-colors cursor-pointer'>
+                    <p className='text-xs font-medium'>Assignments</p>
+                  </div>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Tabs defaultValue='overview'>
+      <Tabs defaultValue='announcements'>
         <TabsList>
-          <TabsTrigger value='overview'>Overview</TabsTrigger>
-          <TabsTrigger value='academics'>Academics</TabsTrigger>
-          <TabsTrigger value='fees'>Fees</TabsTrigger>
-          <TabsTrigger value='communication'>Communication</TabsTrigger>
+          <TabsTrigger value='announcements'>Announcements</TabsTrigger>
+          <TabsTrigger value='events'>Upcoming Events</TabsTrigger>
+          <TabsTrigger value='fees'>Fees & Payments</TabsTrigger>
         </TabsList>
-        <TabsContent value='overview' className='space-y-4'>
+
+        {/* Announcements Tab */}
+        <TabsContent value='announcements' className='space-y-4'>
+          <Card>
+            <CardHeader>
+              <CardTitle>School Announcements</CardTitle>
+              <CardDescription>
+                Latest news and updates from the school
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-4'>
+                {announcements.map((announcement) => (
+                  <div
+                    key={announcement.id}
+                    className='border-b pb-4 last:border-0 last:pb-0'
+                  >
+                    <div className='flex items-center justify-between mb-1'>
+                      <h3 className='font-medium'>{announcement.title}</h3>
+                      <Badge
+                        variant={
+                          announcement.priority === 'high'
+                            ? 'destructive'
+                            : 'outline'
+                        }
+                      >
+                        {announcement.priority === 'high'
+                          ? 'Important'
+                          : 'Announcement'}
+                      </Badge>
+                    </div>
+                    <p className='text-sm text-muted-foreground mb-2'>
+                      {announcement.content}
+                    </p>
+                    <p className='text-xs text-muted-foreground'>
+                      {announcement.date}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className='mt-4 text-center'>
+                <Button variant='outline'>View All Announcements</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value='events' className='space-y-4'>
           <Card>
             <CardHeader>
               <CardTitle>Upcoming Events</CardTitle>
@@ -168,60 +310,14 @@ export default function ParentDashboard() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Notifications</CardTitle>
-              <CardDescription>
-                Stay updated with the latest announcements
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className='flex gap-4 items-start border-b pb-4 last:border-0 last:pb-0'
-                  >
-                    <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary/20'>
-                      <BellIcon className='h-4 w-4 text-primary' />
-                    </div>
-                    <div className='space-y-1'>
-                      <p className='text-sm font-medium'>
-                        {
-                          [
-                            "Emma's Math test scheduled for next week",
-                            'School holiday announced for March 25',
-                            "Noah's Science project due date extended",
-                          ][i - 1]
-                        }
-                      </p>
-                      <p className='text-xs text-muted-foreground'>
-                        {['1 hour ago', 'Yesterday', '2 days ago'][i - 1]}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className='mt-4 text-center'>
+                <Button variant='outline'>View Full Calendar</Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value='academics' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Academic Performance</CardTitle>
-              <CardDescription>
-                Your children's grades and performance
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg'>
-              <p className='text-muted-foreground'>
-                Detailed academic reports will be displayed here
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
+        {/* Fees Tab */}
         <TabsContent value='fees' className='space-y-4'>
           <Card>
             <CardHeader>
@@ -259,55 +355,8 @@ export default function ParentDashboard() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value='communication' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Messages from Teachers</CardTitle>
-              <CardDescription>Recent communications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className='flex gap-4 items-start border-b pb-4 last:border-0 last:pb-0'
-                  >
-                    <div className='flex h-10 w-10 items-center justify-center rounded-full bg-primary/10'>
-                      <MessageSquareIcon className='h-5 w-5 text-primary' />
-                    </div>
-                    <div className='space-y-1'>
-                      <div className='flex items-center gap-2'>
-                        <p className='font-medium'>
-                          {
-                            [
-                              'Dr. Robert Chen (Math)',
-                              'Sarah Johnson (English)',
-                              'Michael Williams (Science)',
-                            ][i - 1]
-                          }
-                        </p>
-                        <Badge variant='outline' className='text-xs'>
-                          {['Emma', 'Noah', 'Emma'][i - 1]}
-                        </Badge>
-                      </div>
-                      <p className='text-sm'>
-                        {
-                          [
-                            'Emma has been doing great in class. I wanted to discuss her upcoming project.',
-                            "Noah's recent essay showed significant improvement. I'm very pleased with his progress.",
-                            "Emma's science fair project is coming along well. Please ensure she completes the final section.",
-                          ][i - 1]
-                        }
-                      </p>
-                      <p className='text-xs text-muted-foreground'>
-                        {['2 hours ago', 'Yesterday', '3 days ago'][i - 1]}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className='mt-4 text-center'>
+                <Button>Make a Payment</Button>
               </div>
             </CardContent>
           </Card>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,10 +36,12 @@ import {
 export default function StudentDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = use(params);
+
   const [student] = useState({
-    id: params.id,
+    id,
     name: 'Emma Johnson',
     grade: '10A',
     gender: 'Female',
@@ -309,14 +311,14 @@ export default function StudentDetailPage({
                 <div className='text-2xl font-bold'>
                   {new Date(student.enrollmentDate).toLocaleDateString(
                     'en-US',
-                    { year: 'numeric', month: 'short' },
+                    { year: 'numeric', month: 'short' }
                   )}
                 </div>
                 <p className='text-xs text-muted-foreground'>
                   {Math.floor(
                     (new Date().getTime() -
                       new Date(student.enrollmentDate).getTime()) /
-                      (1000 * 60 * 60 * 24 * 30),
+                      (1000 * 60 * 60 * 24 * 30)
                   )}{' '}
                   months
                 </p>
@@ -437,8 +439,8 @@ export default function StudentDetailPage({
                                 record.status === 'Present'
                                   ? 'outline'
                                   : record.status === 'Absent'
-                                    ? 'destructive'
-                                    : 'secondary'
+                                  ? 'destructive'
+                                  : 'secondary'
                               }
                             >
                               {record.status}
