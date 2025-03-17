@@ -170,7 +170,9 @@ export default function ProfilePage() {
         toast({
           title: 'Upload failed',
           variant: 'destructive',
-          description: 'An error occurred while uploading your avatar.',
+          description:
+            errorUpload.message ??
+            'An error occurred while uploading your avatar.',
         });
         return;
       }
@@ -188,7 +190,8 @@ export default function ProfilePage() {
         toast({
           title: 'Update failed',
           variant: 'destructive',
-          description: 'An error occurred while updating your profile.',
+          description:
+            error.message ?? 'An error occurred while updating your profile.',
         });
         return;
       }
