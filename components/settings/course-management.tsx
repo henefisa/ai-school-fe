@@ -31,7 +31,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { PlusIcon, SearchIcon, Edit2Icon, Trash2Icon } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
 
 // Mock data for courses
 const mockCourses = [
@@ -78,7 +77,6 @@ const mockCourses = [
 ];
 
 export default function CourseManagement() {
-  const { user } = useAuth();
   const [courses, setCourses] = useState(mockCourses);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
@@ -100,7 +98,7 @@ export default function CourseManagement() {
     (course) =>
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.teacher.toLowerCase().includes(searchTerm.toLowerCase()),
+      course.teacher.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddCourse = () => {
@@ -125,8 +123,8 @@ export default function CourseManagement() {
 
     setCourses(
       courses.map((course) =>
-        course.id === selectedCourse.id ? { ...selectedCourse } : course,
-      ),
+        course.id === selectedCourse.id ? { ...selectedCourse } : course
+      )
     );
     setIsEditCourseOpen(false);
     toast({
@@ -144,6 +142,10 @@ export default function CourseManagement() {
       title: 'Course deleted',
       description: `${selectedCourse.name} has been removed from the system.`,
     });
+  };
+
+  const user = {
+    role: 'admin',
   };
 
   return (

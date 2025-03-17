@@ -28,7 +28,7 @@ interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function DashboardSidebar({
   className,
-  role = 'parent',
+  role = 'student',
   ...props
 }: SidebarNavProps) {
   const pathname = usePathname();

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
 import {
   Card,
   CardContent,
@@ -31,10 +30,7 @@ import LibraryManagement from '@/components/settings/library-management';
 import SystemSettings from '@/components/settings/system-settings';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
-
-  if (!user) return null;
 
   // Define tabs based on user role
   const getTabs = () => {
@@ -104,7 +100,7 @@ export default function SettingsPage() {
       student: [],
     };
 
-    return [...commonTabs, ...(roleSpecificTabs[user.role] || [])];
+    return [...commonTabs, ...(roleSpecificTabs['student'] || [])];
   };
 
   const tabs = getTabs();

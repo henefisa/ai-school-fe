@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/auth-context';
 
 const profileFormSchema = z.object({
   name: z
@@ -52,12 +51,11 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
 
   const defaultValues: Partial<ProfileFormValues> = {
-    name: user?.name || '',
-    email: user?.email || '',
+    name: '',
+    email: '',
     bio: '',
     phone: '',
   };
@@ -91,16 +89,8 @@ export default function ProfileSettings() {
     <div className='space-y-8'>
       <div className='flex flex-col items-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0'>
         <Avatar className='h-24 w-24'>
-          <AvatarImage
-            src={user?.avatar || '/placeholder.svg'}
-            alt={user?.name}
-          />
-          <AvatarFallback>
-            {user?.name
-              .split(' ')
-              .map((n) => n[0])
-              .join('')}
-          </AvatarFallback>
+          <AvatarImage src={'/placeholder.svg'} alt='' />
+          <AvatarFallback>A</AvatarFallback>
         </Avatar>
         <div className='flex flex-col space-y-2'>
           <h3 className='text-lg font-medium'>Profile Picture</h3>
