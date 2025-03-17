@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query'
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ export const Profile: React.FC = () => {
         <Button variant='ghost' className='relative h-9 w-9 rounded-full'>
           <Avatar className='h-9 w-9'>
             <AvatarImage
-              src={'/placeholder.svg'}
+              src={String(profile?.avatar_url)}
               alt={getDisplayName(profile)}
             />
             <AvatarFallback>{getDisplayName(profile)[0]}</AvatarFallback>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -40,13 +40,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { getDisplayName } from '@/utils/get-display-name';
 import { getProfile } from '@/queries/profile/get-profile';
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import {
+  useQuery,
+  useRevalidateTables,
+} from '@supabase-cache-helpers/postgrest-react-query';
 import { createClient } from '@/utils/supabase/client';
+import { useUpload } from '@supabase-cache-helpers/storage-react-query';
+import { nanoid } from 'nanoid';
+import { Loader2, SaveIcon } from 'lucide-react';
 
 // Define the form schema
 const profileFormSchema = z.object({
@@ -88,11 +94,21 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfilePage() {
   const { user } = useAuth();
   const supabase = createClient();
+  const { toast } = useToast();
+
   const { data: profile } = useQuery(getProfile(supabase));
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileSelected, setFileSelected] = useState<File>();
+  const revalidateTables = useRevalidateTables([
+    { schema: 'public', table: 'profiles' },
+  ]);
 
-  // Mock data for the profile
+  const { mutateAsync: upload } = useUpload(supabase.storage.from('avatars'), {
+    buildFileName: () => `${user?.id}/${nanoid()}`,
+  });
+
   const defaultValues: Partial<ProfileFormValues> = {
     name: getDisplayName(profile),
     email: user?.email || '',
@@ -113,40 +129,85 @@ export default function ProfilePage() {
     mode: 'onChange',
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    // In a real application, you would send this data to your API
-    console.log(data);
-
-    // Show success toast
-    toast({
-      title: 'Profile updated',
-      description: 'Your profile has been successfully updated.',
-    });
-
-    // Exit edit mode
-    setIsEditing(false);
-  }
+  function onSubmit(values: ProfileFormValues) {}
 
   function handleCancel() {
-    // Reset form to default values
     form.reset(defaultValues);
 
-    // Exit edit mode
     setIsEditing(false);
   }
 
-  function handleProfilePictureUpload() {
-    // In a real application, you would handle file upload here
-    setIsUploading(true);
+  function handleAvatarClick() {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }
 
-    // Simulate upload delay
-    setTimeout(() => {
-      setIsUploading(false);
-      toast({
-        title: 'Profile picture updated',
-        description: 'Your profile picture has been successfully updated.',
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    setFileSelected(file);
+    setIsUploading(false);
+    toast({
+      title: 'Avatar selected',
+      description: 'Save changes to update your profile picture.',
+    });
+  }
+
+  async function handleUploadAvatar() {
+    try {
+      if (!user || !fileSelected) return;
+
+      const response = await upload({
+        files: [fileSelected],
       });
-    }, 1500);
+
+      const { data: dataUpload, error: errorUpload } = response[0];
+
+      if (errorUpload) {
+        toast({
+          title: 'Upload failed',
+          variant: 'destructive',
+          description: 'An error occurred while uploading your avatar.',
+        });
+        return;
+      }
+
+      const { data: urlData } = await supabase.storage
+        .from('avatars')
+        .getPublicUrl(dataUpload.path);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlData.publicUrl })
+        .eq('id', user.id);
+
+      if (error) {
+        toast({
+          title: 'Update failed',
+          variant: 'destructive',
+          description: 'An error occurred while updating your profile.',
+        });
+        return;
+      }
+
+      revalidateTables();
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile has been successfully updated.',
+      });
+
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: 'Update failed',
+        variant: 'destructive',
+        description:
+          'An unexpected error occurred while updating your profile.',
+      });
+    }
   }
 
   useEffect(() => {
@@ -177,10 +238,28 @@ export default function ProfilePage() {
             <CardTitle>Profile Picture</CardTitle>
           </CardHeader>
           <CardContent className='flex flex-col items-center'>
+            <input
+              type='file'
+              ref={fileInputRef}
+              className='hidden'
+              accept='image/*'
+              onChange={handleFileChange}
+            />
             <div className='relative mb-4'>
-              <Avatar className='h-32 w-32'>
+              <Avatar
+                className={cn(
+                  'h-32 w-32',
+                  isEditing &&
+                    'cursor-pointer hover:opacity-80 transition-opacity'
+                )}
+                onClick={handleAvatarClick}
+              >
                 <AvatarImage
-                  src={'/placeholder.svg'}
+                  src={
+                    fileSelected
+                      ? URL.createObjectURL(fileSelected)
+                      : profile?.avatar_url ?? ''
+                  }
                   alt={getDisplayName(profile)}
                 />
                 <AvatarFallback className='text-3xl'>
@@ -192,7 +271,7 @@ export default function ProfilePage() {
                   size='icon'
                   variant='outline'
                   className='absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background shadow-sm'
-                  onClick={handleProfilePictureUpload}
+                  onClick={handleAvatarClick}
                   disabled={isUploading}
                 >
                   {isUploading ? (
@@ -208,9 +287,11 @@ export default function ProfilePage() {
               <h3 className='text-xl font-semibold'>
                 {getDisplayName(profile)}
               </h3>
-              <p className='text-sm text-muted-foreground capitalize'>
-                {user?.role}
-              </p>
+              {isEditing && (
+                <p className='text-xs text-muted-foreground mt-2'>
+                  Click on the avatar to change
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter className='flex flex-col items-stretch gap-2'>
@@ -226,9 +307,20 @@ export default function ProfilePage() {
                 <p className='text-xs text-muted-foreground'>Active</p>
               </div>
             </div>
+            {isEditing && (
+              <div className='flex justify-center mt-4'>
+                <Button
+                  className='w-full'
+                  onClick={handleUploadAvatar}
+                  disabled={isUploading}
+                >
+                  <SaveIcon className='mr-2 h-4 w-4' />
+                  Save Changes
+                </Button>
+              </div>
+            )}
           </CardFooter>
         </Card>
-
         {/* Profile Form */}
         <div className='space-y-6'>
           <Form {...form}>
@@ -312,7 +404,7 @@ export default function ProfilePage() {
                       control={form.control}
                       name='dob'
                       render={({ field }) => (
-                        <FormItem className='flex flex-col'>
+                        <FormItem>
                           <FormLabel>Date of Birth</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
