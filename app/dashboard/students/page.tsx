@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -36,7 +37,7 @@ export default function StudentsPage() {
     StudentStatusFilter.ALL
   );
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const { data } = useQuery(
+  const { data, isLoading } = useQuery(
     getStudents(supabase, { status: statusFilter, q: debouncedSearchQuery })
   );
 
@@ -128,7 +129,33 @@ export default function StudentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.length ? (
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={`skeleton-${index}`}>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[100px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[60px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[80px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[70px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[60px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[50px]' />
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <Skeleton className='h-8 w-[60px] ml-auto' />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : data?.length ? (
                 data?.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell className='font-medium'>
