@@ -97,27 +97,36 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null;
+          bio: string | null;
           dob: string | null;
+          email: string | null;
           first_name: string | null;
           gender: Database['public']['Enums']['gender'] | null;
           id: string;
           last_name: string | null;
+          phone: string | null;
         };
         Insert: {
           avatar_url?: string | null;
+          bio?: string | null;
           dob?: string | null;
+          email?: string | null;
           first_name?: string | null;
           gender?: Database['public']['Enums']['gender'] | null;
           id?: string;
           last_name?: string | null;
+          phone?: string | null;
         };
         Update: {
           avatar_url?: string | null;
+          bio?: string | null;
           dob?: string | null;
+          email?: string | null;
           first_name?: string | null;
           gender?: Database['public']['Enums']['gender'] | null;
           id?: string;
           last_name?: string | null;
+          phone?: string | null;
         };
         Relationships: [];
       };
@@ -160,21 +169,24 @@ export type Database = {
           created_at: string;
           enrollment_date: string | null;
           id: string;
-          profile_id: string | null;
+          profile_id: string;
+          status: boolean;
         };
         Insert: {
           address_id?: string | null;
           created_at?: string;
           enrollment_date?: string | null;
           id?: string;
-          profile_id?: string | null;
+          profile_id: string;
+          status?: boolean;
         };
         Update: {
           address_id?: string | null;
           created_at?: string;
           enrollment_date?: string | null;
           id?: string;
-          profile_id?: string | null;
+          profile_id?: string;
+          status?: boolean;
         };
         Relationships: [
           {

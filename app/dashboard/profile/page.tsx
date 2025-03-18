@@ -44,7 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 import { getDisplayName } from '@/utils/get-display-name';
-import { getProfile } from '@/queries/profile/get-profile';
+import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import {
   useQuery,
   useRevalidateTables,
@@ -95,8 +95,10 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const supabase = createClient();
   const { toast } = useToast();
+  const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''), {
+    enabled: !!user?.id,
+  });
 
-  const { data: profile } = useQuery(getProfile(supabase));
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

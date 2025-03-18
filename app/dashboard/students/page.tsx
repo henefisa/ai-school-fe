@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,6 +18,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getStudents } from '@/queries/student/get-students';
+import { createClient } from '@/utils/supabase/client';
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import {
   Download,
   Filter,
@@ -25,6 +30,11 @@ import {
 } from 'lucide-react';
 
 export default function StudentsPage() {
+  const supabase = createClient();
+  const { data } = useQuery(getStudents(supabase));
+
+  console.log(data);
+
   // Sample student data
   const students = [
     {
