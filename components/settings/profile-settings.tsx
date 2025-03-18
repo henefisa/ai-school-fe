@@ -56,7 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { AlertDialogHeader } from '@/components/ui/alert-dialog';
+import { FileUpload } from '@/components/upload/file-upload';
 
 const profileFormSchema = z.object({
   firstName: z
@@ -134,7 +134,7 @@ export default function ProfileSettings() {
     }
   }
 
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
@@ -160,7 +160,7 @@ export default function ProfileSettings() {
 
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: null })
+        .update({ avatar_url: '' })
         .eq('id', user.id);
 
       if (updateError) {
@@ -237,7 +237,7 @@ export default function ProfileSettings() {
 
       const { error } = await supabase
         .from('profiles')
-        .update({ ...payload })
+        .update(payload)
         .eq('id', user.id);
 
       if (error) {
@@ -269,25 +269,21 @@ export default function ProfileSettings() {
   }
 
   useEffect(() => {
-    form.setValue('firstName', profile?.first_name ?? '');
-    form.setValue('lastName', profile?.last_name ?? '');
-    form.setValue('gender', profile?.gender ?? 'OTHER');
-    form.setValue('bio', profile?.bio ?? '');
-
-    if (profile?.dob) {
-      form.setValue('dob', new Date(profile?.dob));
-    }
-  }, [profile, user]);
+    form.reset({
+      firstName: profile?.first_name,
+      lastName: profile?.last_name,
+      gender: profile?.gender,
+      bio: profile?.bio,
+      dob: profile?.dob ? new Date(profile?.dob) : undefined,
+    });
+  }, [profile]);
 
   return (
     <div className='space-y-8'>
       <div className='flex flex-col items-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0'>
-        <input
-          type='file'
-          ref={fileInputRef}
-          className='hidden'
-          accept='image/*'
-          onChange={handleFileChange}
+        <FileUpload
+          fileInputRef={fileInputRef}
+          onFileChange={handleFileChange}
         />
         <div className='relative mb-4'>
           <Avatar className={cn('h-32 w-32')} onClick={handleAvatarClick}>
