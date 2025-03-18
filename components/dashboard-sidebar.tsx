@@ -20,22 +20,33 @@ import {
   FileTextIcon,
   ClipboardCheckIcon,
   BellIcon,
+  LucideIcon,
 } from 'lucide-react';
+import { Tables } from '@/utils/supabase/database.types';
+
+type Role = Tables<'user_roles'>['role'];
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
-  role?: 'admin' | 'teacher' | 'parent' | 'student';
+  role: Role;
+}
+
+interface NavItem {
+  name: string;
+  href?: string;
+  icon?: LucideIcon;
+  type?: 'separator';
 }
 
 export function DashboardSidebar({
   className,
-  role = 'student',
+  role,
   ...props
 }: SidebarNavProps) {
   const pathname = usePathname();
 
   // Define navigation items based on user role
   const getNavItems = () => {
-    const commonItems = [
+    const commonItems: NavItem[] = [
       {
         name: 'Dashboard',
         href: '/dashboard',
@@ -53,8 +64,8 @@ export function DashboardSidebar({
       },
     ];
 
-    const roleSpecificItems = {
-      admin: [
+    const roleSpecificItems: Record<Role, NavItem[]> = {
+      ADMIN: [
         {
           name: 'Students',
           href: '/dashboard/students',
@@ -86,7 +97,7 @@ export function DashboardSidebar({
           icon: LibraryIcon,
         },
       ],
-      teacher: [
+      TEACHER: [
         {
           name: 'My Classes',
           href: '/dashboard/classes',
@@ -118,7 +129,7 @@ export function DashboardSidebar({
           icon: FileTextIcon,
         },
       ],
-      student: [
+      STUDENT: [
         {
           name: 'My Courses',
           href: '/dashboard/courses',
@@ -150,7 +161,7 @@ export function DashboardSidebar({
           icon: ClipboardCheckIcon,
         },
       ],
-      parent: [
+      PARENT: [
         {
           name: 'My Children',
           href: '/dashboard/children',
@@ -177,9 +188,10 @@ export function DashboardSidebar({
           icon: BellIcon,
         },
       ],
+      STAFF: [],
     };
 
-    const settingsItem = [
+    const settingsItem: NavItem[] = [
       {
         name: 'Settings',
         href: '/dashboard/settings',
@@ -189,9 +201,9 @@ export function DashboardSidebar({
 
     return [
       ...commonItems,
-      { type: 'separator', name: 'Main Menu' },
+      { type: 'separator', name: 'Main Menu' } as NavItem,
       ...roleSpecificItems[role],
-      { type: 'separator', name: 'Preferences' },
+      { type: 'separator', name: 'Preferences' } as NavItem,
       ...settingsItem,
     ];
   };
@@ -221,6 +233,10 @@ export function DashboardSidebar({
                 );
               }
 
+              if (!item.href) {
+                return null;
+              }
+
               const isActive =
                 pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -235,14 +251,17 @@ export function DashboardSidebar({
                       : 'text-muted-foreground hover:text-primary'
                   )}
                 >
-                  <item.icon
-                    className={cn(
-                      'h-5 w-5',
-                      isActive
-                        ? 'text-primary'
-                        : 'text-muted-foreground group-hover:text-primary'
-                    )}
-                  />
+                  {item.icon && (
+                    <item.icon
+                      className={cn(
+                        'h-5 w-5',
+                        isActive
+                          ? 'text-primary'
+                          : 'text-muted-foreground group-hover:text-primary'
+                      )}
+                    />
+                  )}
+
                   {item.name}
                 </Link>
               );

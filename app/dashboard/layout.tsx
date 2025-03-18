@@ -1,3 +1,5 @@
+'use client';
+
 import type React from 'react';
 import { DashboardSidebar } from '@/components/dashboard-sidebar';
 import { Button } from '@/components/ui/button';
@@ -5,12 +7,22 @@ import { BellIcon, MenuIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { RoleSwitcher } from '@/components/role-switcher';
 import { Profile } from '@/components/header/profile';
+import { createClient } from '@/utils/supabase/client';
+import { getRole } from '@/queries/role/get-role';
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
+  const { data } = useQuery(getRole(supabase));
+
+  if (!data) {
+    return null;
+  }
+
   return (
     <div className='flex min-h-screen flex-col'>
       <header className='sticky top-0 z-40 border-b bg-background'>
@@ -24,7 +36,7 @@ export default async function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='w-72 p-0'>
-                <DashboardSidebar />
+                <DashboardSidebar role={data.role} />
               </SheetContent>
             </Sheet>
             <span className='text-lg font-bold'>EduManage</span>
@@ -44,7 +56,7 @@ export default async function DashboardLayout({
       </header>
       <div className='flex flex-1'>
         <aside className='hidden w-64 border-r md:block'>
-          <DashboardSidebar />
+          <DashboardSidebar role={data.role} />
         </aside>
         <main className='flex-1 overflow-auto p-4 md:p-6'>{children}</main>
       </div>
