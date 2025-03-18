@@ -22,9 +22,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { toast } from '@/components/ui/use-toast';
-import { Eye, EyeOff, Lock, ShieldCheck, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Eye, EyeOff, Lock, ShieldCheck } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 const passwordFormSchema = z
   .object({
@@ -46,6 +47,10 @@ const passwordFormSchema = z
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function AccountSettings() {
+  const { user } = useAuth();
+  const supabase = createClient();
+  const { toast } = useToast();
+
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -59,13 +64,55 @@ export default function AccountSettings() {
     },
   });
 
-  function onSubmit(data: PasswordFormValues) {
-    toast({
-      title: 'Password updated',
-      description: 'Your password has been updated.',
-    });
-    console.log(data);
-    form.reset();
+  async function onSubmit(values: PasswordFormValues) {
+    if (!user?.email) return;
+
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: values.currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: 'Password verification failed',
+          description: 'The current password you entered is incorrect.',
+          variant: 'destructive',
+        });
+
+        form.setError('currentPassword', {
+          message: 'Current password is incorrect',
+        });
+        return;
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: values.newPassword,
+      });
+
+      if (updateError) {
+        toast({
+          title: 'Update failed',
+          description:
+            updateError.message ||
+            'An unexpected error occurred. Please try again.',
+          variant: 'destructive',
+        });
+
+        return;
+      }
+      toast({
+        title: 'Password updated',
+        description: 'Your password has been updated successfully.',
+      });
+      form.reset();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+    }
   }
 
   function handleTwoFactorToggle(checked: boolean) {
