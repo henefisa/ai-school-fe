@@ -15,13 +15,15 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { getDisplayName } from '@/utils/get-display-name';
-import { getProfile } from '@/queries/profile/get-profile';
+import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { createClient } from '@/utils/supabase/client';
 
 export const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const supabase = createClient();
-  const { data: profile } = useQuery(getProfile(supabase));
+  const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''), {
+    enabled: !!user?.id,
+  });
 
   const router = useRouter();
 

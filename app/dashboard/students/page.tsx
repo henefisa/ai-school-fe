@@ -1,12 +1,16 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -15,109 +19,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import useDebounce from '@/hooks/use-debounce';
 import {
-  Download,
-  Filter,
-  PlusCircle,
-  Search,
-  SlidersHorizontal,
-} from 'lucide-react';
+  getStudents,
+  StudentStatusFilter,
+} from '@/queries/student/get-students';
+import { getDisplayName } from '@/utils/get-display-name';
+import { createClient } from '@/utils/supabase/client';
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { Download, PlusCircle, Search } from 'lucide-react';
+import { useState } from 'react';
 
 export default function StudentsPage() {
-  // Sample student data
-  const students = [
-    {
-      id: 1,
-      name: 'Emma Johnson',
-      grade: '10A',
-      gender: 'Female',
-      status: 'Active',
-      attendance: '98%',
-      avgGrade: 'A',
-    },
-    {
-      id: 2,
-      name: 'Liam Smith',
-      grade: '9B',
-      gender: 'Male',
-      status: 'Active',
-      attendance: '95%',
-      avgGrade: 'B+',
-    },
-    {
-      id: 3,
-      name: 'Olivia Brown',
-      grade: '11C',
-      gender: 'Female',
-      status: 'Active',
-      attendance: '97%',
-      avgGrade: 'A-',
-    },
-    {
-      id: 4,
-      name: 'Noah Davis',
-      grade: '10A',
-      gender: 'Male',
-      status: 'Active',
-      attendance: '92%',
-      avgGrade: 'B',
-    },
-    {
-      id: 5,
-      name: 'Sophia Wilson',
-      grade: '9B',
-      gender: 'Female',
-      status: 'Inactive',
-      attendance: '85%',
-      avgGrade: 'C+',
-    },
-    {
-      id: 6,
-      name: 'Jackson Miller',
-      grade: '11C',
-      gender: 'Male',
-      status: 'Active',
-      attendance: '94%',
-      avgGrade: 'B+',
-    },
-    {
-      id: 7,
-      name: 'Ava Moore',
-      grade: '10A',
-      gender: 'Female',
-      status: 'Active',
-      attendance: '99%',
-      avgGrade: 'A+',
-    },
-    {
-      id: 8,
-      name: 'Lucas Taylor',
-      grade: '9B',
-      gender: 'Male',
-      status: 'Active',
-      attendance: '91%',
-      avgGrade: 'B-',
-    },
-    {
-      id: 9,
-      name: 'Mia Anderson',
-      grade: '11C',
-      gender: 'Female',
-      status: 'Inactive',
-      attendance: '80%',
-      avgGrade: 'C',
-    },
-    {
-      id: 10,
-      name: 'Ethan Thomas',
-      grade: '10A',
-      gender: 'Male',
-      status: 'Active',
-      attendance: '96%',
-      avgGrade: 'A-',
-    },
-  ];
+  const supabase = createClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>(
+    StudentStatusFilter.ALL
+  );
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const { data, isLoading } = useQuery(
+    getStudents(supabase, { status: statusFilter, q: debouncedSearchQuery })
+  );
 
   return (
     <div className='space-y-6'>
@@ -133,177 +55,148 @@ export default function StudentsPage() {
           Add Student
         </Button>
       </div>
-
-      <Tabs defaultValue='all'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between'>
-          <TabsList>
-            <TabsTrigger value='all'>All Students</TabsTrigger>
-            <TabsTrigger value='active'>Active</TabsTrigger>
-            <TabsTrigger value='inactive'>Inactive</TabsTrigger>
-          </TabsList>
-          <div className='mt-4 flex items-center gap-2 sm:mt-0'>
-            <div className='relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                type='search'
-                placeholder='Search students...'
-                className='w-full rounded-md pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]'
-              />
+      <Card>
+        <CardHeader className='pb-3'>
+          <CardTitle>Student Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+            <div className='space-y-2'>
+              <label htmlFor='search' className='text-sm font-medium'>
+                Search Students
+              </label>
+              <div className='relative'>
+                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                <Input
+                  id='search'
+                  type='search'
+                  placeholder='Search by name...'
+                  className='pl-8'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-            <Button variant='outline' size='icon'>
-              <Filter className='h-4 w-4' />
-              <span className='sr-only'>Filter</span>
-            </Button>
-            <Button variant='outline' size='icon'>
-              <SlidersHorizontal className='h-4 w-4' />
-              <span className='sr-only'>Settings</span>
-            </Button>
+            <div className='space-y-2'>
+              <label htmlFor='status' className='text-sm font-medium'>
+                Status
+              </label>
+              <Select
+                value={statusFilter}
+                onValueChange={(value: StudentStatusFilter) =>
+                  setStatusFilter(value)
+                }
+              >
+                <SelectTrigger id='status'>
+                  <SelectValue placeholder='Select status' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={StudentStatusFilter.ALL}>
+                    All Students
+                  </SelectItem>
+                  <SelectItem value={StudentStatusFilter.ACTIVE}>
+                    Active
+                  </SelectItem>
+                  <SelectItem value={StudentStatusFilter.INACTIVE}>
+                    Inactive
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        <TabsContent value='all' className='space-y-4'>
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle>All Students</CardTitle>
-              <Button variant='outline' size='sm'>
-                <Download className='mr-2 h-4 w-4' />
-                Export
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Gender</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Attendance</TableHead>
-                    <TableHead>Avg. Grade</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <CardTitle>Students List</CardTitle>
+          <Button variant='outline' size='sm'>
+            <Download className='mr-2 h-4 w-4' />
+            Export
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Grade</TableHead>
+                <TableHead>Gender</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Attendance</TableHead>
+                <TableHead>Avg. Grade</TableHead>
+                <TableHead className='text-right'>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={`skeleton-${index}`}>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[100px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[60px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[80px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[70px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[60px]' />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className='h-6 w-[50px]' />
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <Skeleton className='h-8 w-[60px] ml-auto' />
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className='font-medium'>
-                        {student.name}
-                      </TableCell>
-                      <TableCell>{student.grade}</TableCell>
-                      <TableCell>{student.gender}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            student.status === 'Active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {student.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>{student.attendance}</TableCell>
-                      <TableCell>{student.avgGrade}</TableCell>
-                      <TableCell className='text-right'>
-                        <Button variant='ghost' size='sm'>
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value='active' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Students</CardTitle>
-              <CardDescription>
-                Students who are currently enrolled and active in the school.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Gender</TableHead>
-                    <TableHead>Attendance</TableHead>
-                    <TableHead>Avg. Grade</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
+                ))
+              ) : data?.length ? (
+                data?.map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell className='font-medium'>
+                      {getDisplayName(student.profiles)}
+                    </TableCell>
+                    {/* <TableCell>{student.grade}</TableCell> */}
+                    <TableCell>12B1</TableCell>
+                    <TableCell>{student.profiles?.gender}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          student.status
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {student.status ? 'Active' : 'Inactive'}
+                      </span>
+                    </TableCell>
+                    {/* <TableCell>{student.attendance}</TableCell> */}
+                    <TableCell>95%</TableCell>
+                    {/* <TableCell>{student.avgGrade}</TableCell> */}
+                    <TableCell>A</TableCell>
+                    <TableCell className='text-right'>
+                      <Button variant='ghost' size='sm'>
+                        View
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {students
-                    .filter((student) => student.status === 'Active')
-                    .map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className='font-medium'>
-                          {student.name}
-                        </TableCell>
-                        <TableCell>{student.grade}</TableCell>
-                        <TableCell>{student.gender}</TableCell>
-                        <TableCell>{student.attendance}</TableCell>
-                        <TableCell>{student.avgGrade}</TableCell>
-                        <TableCell className='text-right'>
-                          <Button variant='ghost' size='sm'>
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value='inactive' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Inactive Students</CardTitle>
-              <CardDescription>
-                Students who are currently not active or have been withdrawn.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Gender</TableHead>
-                    <TableHead>Attendance</TableHead>
-                    <TableHead>Avg. Grade</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {students
-                    .filter((student) => student.status === 'Inactive')
-                    .map((student) => (
-                      <TableRow key={student.id}>
-                        <TableCell className='font-medium'>
-                          {student.name}
-                        </TableCell>
-                        <TableCell>{student.grade}</TableCell>
-                        <TableCell>{student.gender}</TableCell>
-                        <TableCell>{student.attendance}</TableCell>
-                        <TableCell>{student.avgGrade}</TableCell>
-                        <TableCell className='text-right'>
-                          <Button variant='ghost' size='sm'>
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className='h-24 text-center'>
+                    No students found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
