@@ -66,61 +66,69 @@ export type Database = {
           contact_number_1: string | null;
           contact_number_2: string | null;
           created_at: string;
-          dob: string | null;
-          first_name: string | null;
           id: string;
-          last_name: string | null;
-          occupation: string | null;
+          occupation: string;
+          profile_id: string | null;
         };
         Insert: {
           contact_number_1?: string | null;
           contact_number_2?: string | null;
           created_at?: string;
-          dob?: string | null;
-          first_name?: string | null;
           id?: string;
-          last_name?: string | null;
-          occupation?: string | null;
+          occupation?: string;
+          profile_id?: string | null;
         };
         Update: {
           contact_number_1?: string | null;
           contact_number_2?: string | null;
           created_at?: string;
-          dob?: string | null;
-          first_name?: string | null;
           id?: string;
-          last_name?: string | null;
-          occupation?: string | null;
+          occupation?: string;
+          profile_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'parents_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
       };
       profiles: {
         Row: {
           avatar_url: string;
           bio: string;
           dob: string | null;
+          email: string;
           first_name: string;
           gender: Database['public']['Enums']['gender'];
           id: string;
           last_name: string;
+          phone: string;
         };
         Insert: {
           avatar_url?: string;
           bio?: string;
           dob?: string | null;
+          email?: string;
           first_name?: string;
           gender?: Database['public']['Enums']['gender'];
           id?: string;
           last_name?: string;
+          phone?: string;
         };
         Update: {
           avatar_url?: string;
           bio?: string;
           dob?: string | null;
+          email?: string;
           first_name?: string;
           gender?: Database['public']['Enums']['gender'];
           id?: string;
           last_name?: string;
+          phone?: string;
         };
         Relationships: [];
       };

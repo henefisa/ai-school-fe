@@ -57,11 +57,12 @@ export default function StudentDetailPage({
     address: '123 School Lane, Cityville',
     email: 'emma.johnson@example.com',
     phone: '(555) 123-4567',
-    parentName: 'Michael & Sarah Johnson',
-    parentEmail: 'johnson.parents@example.com',
-    parentPhone: '(555) 987-6543',
-    enrollmentDate: '2022-09-01',
-    status: 'Active',
+    parentName: getDisplayName(data?.parents[0].profiles),
+    parentEmail: data?.parents[0]?.profiles?.email,
+    parentPhone: data?.parents[0]?.profiles?.phone,
+    enrollmentDate:
+      data?.enrollment_date && dayjs(data.enrollment_date).format('DD/MM/YYYY'),
+    status: data?.status ? 'Active' : 'Inactive',
     attendance: 98,
     gpa: 3.8,
     avatar: '/placeholder.svg',
@@ -315,19 +316,9 @@ export default function StudentDetailPage({
               </CardHeader>
               <CardContent>
                 <div className='text-2xl font-bold'>
-                  {new Date(student.enrollmentDate).toLocaleDateString(
-                    'en-US',
-                    { year: 'numeric', month: 'short' }
-                  )}
+                  {student.enrollmentDate}
                 </div>
-                <p className='text-xs text-muted-foreground'>
-                  {Math.floor(
-                    (new Date().getTime() -
-                      new Date(student.enrollmentDate).getTime()) /
-                      (1000 * 60 * 60 * 24 * 30)
-                  )}{' '}
-                  months
-                </p>
+                <p className='text-xs text-muted-foreground'>30 months</p>
               </CardContent>
             </Card>
           </div>
