@@ -96,37 +96,31 @@ export type Database = {
       };
       profiles: {
         Row: {
-          avatar_url: string | null;
-          bio: string | null;
+          avatar_url: string;
+          bio: string;
           dob: string | null;
-          email: string | null;
-          first_name: string | null;
-          gender: Database['public']['Enums']['gender'] | null;
+          first_name: string;
+          gender: Database['public']['Enums']['gender'];
           id: string;
-          last_name: string | null;
-          phone: string | null;
+          last_name: string;
         };
         Insert: {
-          avatar_url?: string | null;
-          bio?: string | null;
+          avatar_url?: string;
+          bio?: string;
           dob?: string | null;
-          email?: string | null;
-          first_name?: string | null;
-          gender?: Database['public']['Enums']['gender'] | null;
+          first_name?: string;
+          gender?: Database['public']['Enums']['gender'];
           id?: string;
-          last_name?: string | null;
-          phone?: string | null;
+          last_name?: string;
         };
         Update: {
-          avatar_url?: string | null;
-          bio?: string | null;
+          avatar_url?: string;
+          bio?: string;
           dob?: string | null;
-          email?: string | null;
-          first_name?: string | null;
-          gender?: Database['public']['Enums']['gender'] | null;
+          first_name?: string;
+          gender?: Database['public']['Enums']['gender'];
           id?: string;
-          last_name?: string | null;
-          phone?: string | null;
+          last_name?: string;
         };
         Relationships: [];
       };
