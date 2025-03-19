@@ -44,18 +44,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { AlertTriangle, CalendarIcon } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { getProfileById } from '@/queries/profile/get-profile-by-id';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { FileUpload } from '@/components/upload/file-upload';
 
 const profileFormSchema = z.object({
@@ -103,16 +95,11 @@ export default function ProfileSettings() {
   const { mutateAsync: upload } = useUpload(supabase.storage.from('avatars'), {
     buildFileName: () => `${user?.id}/${nanoid()}`,
   });
-  const { mutateAsync: remove } = useRemoveFiles(
-    supabase.storage.from('avatars')
-  );
 
   const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''));
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileSelected, setFileSelected] = useState<File>();
-  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
 
   const defaultValues: Partial<ProfileFormValues> = {
     firstName: '',
@@ -145,54 +132,6 @@ export default function ProfileSettings() {
       title: 'Avatar selected',
       description: 'Save changes to update your profile picture.',
     });
-  }
-
-  async function handleRemoveAvatar() {
-    if (!user || !profile?.avatar_url) return;
-
-    try {
-      setIsRemoving(true);
-      const avatarPath = profile.avatar_url.split('/').slice(-2).join('/');
-
-      if (avatarPath) {
-        await remove([avatarPath]);
-      }
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: '' })
-        .eq('id', user.id);
-
-      if (updateError) {
-        toast({
-          title: 'Failed to remove profile picture',
-          description:
-            updateError.message ||
-            'An error occurred while removing your profile picture.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setFileSelected(undefined);
-
-      await revalidateTables();
-
-      toast({
-        title: 'Profile picture removed',
-        description: 'Your profile picture has been removed successfully.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Failed to remove profile picture',
-        description:
-          'An unexpected error occurred while removing your profile picture.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsRemoving(false);
-      setIsRemoveDialogOpen(false);
-    }
   }
 
   async function onSubmit(data: ProfileFormValues) {
@@ -305,13 +244,6 @@ export default function ProfileSettings() {
           <div className='flex space-x-2'>
             <Button onClick={handleAvatarClick} disabled={isUploading}>
               {isUploading ? 'Uploading...' : 'Upload New Picture'}
-            </Button>
-            <Button
-              variant='outline'
-              onClick={() => setIsRemoveDialogOpen(true)}
-              disabled={!profile?.avatar_url && !fileSelected}
-            >
-              Remove
             </Button>
           </div>
           <p className='text-sm text-muted-foreground'>
@@ -444,35 +376,6 @@ export default function ProfileSettings() {
           <Button type='submit'>Save Changes</Button>
         </form>
       </Form>
-      <Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className='flex items-center gap-2'>
-              <AlertTriangle className='h-5 w-5 text-destructive' />
-              Remove Profile Picture
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove your profile picture? This action
-              cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className='flex space-x-2 sm:justify-end'>
-            <Button
-              variant='outline'
-              onClick={() => setIsRemoveDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant='destructive'
-              onClick={handleRemoveAvatar}
-              disabled={isRemoving}
-            >
-              {isRemoving ? 'Removing...' : 'Remove'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
