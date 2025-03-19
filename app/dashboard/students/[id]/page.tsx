@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +32,11 @@ import {
   Phone,
   User,
 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { getStudentById } from '@/queries/student/get-student-by-id';
+import { getDisplayName } from '@/utils/get-display-name';
+import dayjs from 'dayjs';
 
 export default function StudentDetailPage({
   params,
@@ -39,13 +44,16 @@ export default function StudentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const client = createClient();
+  const { data } = useQuery(getStudentById(client, id));
 
-  const [student] = useState({
+  const student = {
     id,
-    name: 'Emma Johnson',
+    name: getDisplayName(data?.profiles),
     grade: '10A',
-    gender: 'Female',
-    dateOfBirth: '2008-05-15',
+    gender: data?.profiles.gender,
+    dateOfBirth:
+      data?.profiles.dob && dayjs(data.profiles.dob).format('DD/MM/YYYY'),
     address: '123 School Lane, Cityville',
     email: 'emma.johnson@example.com',
     phone: '(555) 123-4567',
@@ -57,7 +65,7 @@ export default function StudentDetailPage({
     attendance: 98,
     gpa: 3.8,
     avatar: '/placeholder.svg',
-  });
+  };
 
   // Sample course data
   const courses = [
@@ -231,9 +239,7 @@ export default function StudentDetailPage({
                 <Calendar className='h-4 w-4 text-muted-foreground' />
                 <div className='grid grid-cols-2 gap-1 text-sm'>
                   <span className='text-muted-foreground'>Date of Birth:</span>
-                  <span>
-                    {new Date(student.dateOfBirth).toLocaleDateString()}
-                  </span>
+                  <span>{student.dateOfBirth}</span>
                 </div>
               </div>
               <div className='flex items-center gap-2'>

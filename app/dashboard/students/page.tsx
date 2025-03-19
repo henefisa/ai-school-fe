@@ -28,6 +28,7 @@ import { getDisplayName } from '@/utils/get-display-name';
 import { createClient } from '@/utils/supabase/client';
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { Download, PlusCircle, Search } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function StudentsPage() {
@@ -180,9 +181,11 @@ export default function StudentsPage() {
                     {/* <TableCell>{student.avgGrade}</TableCell> */}
                     <TableCell>A</TableCell>
                     <TableCell className='text-right'>
-                      <Button variant='ghost' size='sm'>
-                        View
-                      </Button>
+                      <Link href={`students/${student.id}`}>
+                        <Button variant='ghost' size='sm'>
+                          View
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))
