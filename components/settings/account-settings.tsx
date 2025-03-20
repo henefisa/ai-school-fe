@@ -127,7 +127,7 @@ export default function AccountSettings() {
   }
 
   return (
-    <div className='w-full max-w-3xl mx-auto'>
+    <div className='w-full'>
       <Accordion type='single' collapsible className='w-full space-y-4'>
         <AccordionItem
           value='change-password'

@@ -17,20 +17,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
   useQuery,
   useRevalidateTables,
+  useUpdateMutation,
 } from '@supabase-cache-helpers/postgrest-react-query';
 import { cn } from '@/lib/utils';
 import { getDisplayName } from '@/utils/get-display-name';
-import {
-  useRemoveFiles,
-  useUpload,
-} from '@supabase-cache-helpers/storage-react-query';
+import { useUpload } from '@supabase-cache-helpers/storage-react-query';
 import { nanoid } from 'nanoid';
 import {
   Select,
@@ -49,6 +46,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { FileUpload } from '@/components/upload/file-upload';
+import lodash from 'lodash';
 
 const profileFormSchema = z.object({
   firstName: z
@@ -67,6 +65,18 @@ const profileFormSchema = z.object({
     .max(30, {
       message: 'Name must not be longer than 30 characters.',
     }),
+  email: z.string().email({
+    message: 'Please enter a valid email address.',
+  }),
+  phone: z
+    .string()
+    .min(10, {
+      message: 'Phone number must be at least 10 characters.',
+    })
+    .max(15, {
+      message: 'Phone number must not be longer than 15 characters.',
+    })
+    .optional(),
   gender: z
     .enum(['MALE', 'FEMALE', 'OTHER'], {
       message: 'Gender must be male, female, or other.',
@@ -96,6 +106,12 @@ export default function ProfileSettings() {
     buildFileName: () => `${user?.id}/${nanoid()}`,
   });
 
+  const { mutateAsync: update } = useUpdateMutation(
+    supabase.from('profiles'),
+    ['id'],
+    '*'
+  );
+
   const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''));
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,6 +121,8 @@ export default function ProfileSettings() {
     firstName: '',
     lastName: '',
     bio: '',
+    email: '',
+    phone: '',
     gender: undefined,
     dob: undefined,
     avatarUrl: '',
@@ -139,13 +157,25 @@ export default function ProfileSettings() {
 
     try {
       let payload = {
+        id: user.id,
         first_name: data.firstName,
         last_name: data.lastName,
         bio: data.bio,
         gender: data.gender,
         avatar_url: profile?.avatar_url,
+        phone: data.phone,
+        email: data.email,
         dob: data.dob ? data.dob.toISOString().split('T')[0] : null,
       };
+
+      const isDataChanged = !lodash.isEqual(payload, profile);
+      if (!isDataChanged && !fileSelected) {
+        toast({
+          title: 'No changes detected',
+          description: 'You have not made any changes to your profile.',
+        });
+        return;
+      }
 
       if (fileSelected) {
         const response = await upload({
@@ -174,20 +204,7 @@ export default function ProfileSettings() {
         };
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(payload)
-        .eq('id', user.id);
-
-      if (error) {
-        toast({
-          title: 'Update failed',
-          variant: 'destructive',
-          description:
-            error.message ?? 'An error occurred while updating your profile.',
-        });
-        return;
-      }
+      await update(payload);
 
       form.reset(defaultValues);
 
@@ -212,6 +229,9 @@ export default function ProfileSettings() {
       firstName: profile?.first_name,
       lastName: profile?.last_name,
       gender: profile?.gender,
+      avatarUrl: profile?.avatar_url,
+      email: profile?.email,
+      phone: profile?.phone,
       bio: profile?.bio,
       dob: profile?.dob ? new Date(profile?.dob) : undefined,
     });
@@ -293,7 +313,10 @@ export default function ProfileSettings() {
               <FormItem>
                 <FormLabel>Gender</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ?? ''}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder='Select your gender' />
                     </SelectTrigger>
@@ -305,6 +328,38 @@ export default function ProfileSettings() {
                   </Select>
                 </FormControl>
                 <FormDescription>Select your gender.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder='Your email' {...field} />
+                </FormControl>
+                <FormDescription>
+                  This is the email address you use to log in.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='phone'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input placeholder='Your phone number' {...field} />
+                </FormControl>
+                <FormDescription>
+                  This is your contact phone number.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
