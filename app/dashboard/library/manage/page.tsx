@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -50,6 +49,7 @@ import {
   AlertCircleIcon,
 } from 'lucide-react';
 import Link from 'next/link';
+import { AuthContext } from '@/contexts/auth';
 
 // Mock data for books
 const books = [
@@ -153,7 +153,7 @@ const statistics = {
 };
 
 export default function LibraryManagementPage() {
-  const { user } = useAuth();
+  const { user } = use(AuthContext);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('books');
@@ -428,15 +428,15 @@ export default function LibraryManagementPage() {
                             book.status === 'available'
                               ? 'bg-green-500'
                               : book.status === 'checked-out'
-                                ? 'bg-red-500'
-                                : 'bg-yellow-500'
+                              ? 'bg-red-500'
+                              : 'bg-yellow-500'
                           }
                         >
                           {book.status === 'available'
                             ? 'Available'
                             : book.status === 'checked-out'
-                              ? 'Checked Out'
-                              : 'Reserved'}
+                            ? 'Checked Out'
+                            : 'Reserved'}
                         </Badge>
                       </TableCell>
                       <TableCell className='text-right'>
@@ -497,15 +497,15 @@ export default function LibraryManagementPage() {
                           borrower.status === 'active'
                             ? 'bg-green-500'
                             : borrower.status === 'due-soon'
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
+                            ? 'bg-yellow-500'
+                            : 'bg-red-500'
                         }
                       >
                         {borrower.status === 'active'
                           ? 'Active'
                           : borrower.status === 'due-soon'
-                            ? 'Due Soon'
-                            : 'Overdue'}
+                          ? 'Due Soon'
+                          : 'Overdue'}
                       </Badge>
                     </TableCell>
                     <TableCell className='text-right'>
@@ -540,7 +540,9 @@ export default function LibraryManagementPage() {
                           <div
                             className='h-2 rounded-full bg-primary'
                             style={{
-                              width: `${(category.count / statistics.totalBooks) * 100}%`,
+                              width: `${
+                                (category.count / statistics.totalBooks) * 100
+                              }%`,
                             }}
                           />
                         </div>
@@ -570,7 +572,11 @@ export default function LibraryManagementPage() {
                         <div
                           className='h-2 rounded-full bg-green-500'
                           style={{
-                            width: `${(statistics.availableBooks / statistics.totalBooks) * 100}%`,
+                            width: `${
+                              (statistics.availableBooks /
+                                statistics.totalBooks) *
+                              100
+                            }%`,
                           }}
                         />
                       </div>
@@ -586,7 +592,12 @@ export default function LibraryManagementPage() {
                         <div
                           className='h-2 rounded-full bg-blue-500'
                           style={{
-                            width: `${((statistics.checkedOutBooks - statistics.overdueBooks) / statistics.totalBooks) * 100}%`,
+                            width: `${
+                              ((statistics.checkedOutBooks -
+                                statistics.overdueBooks) /
+                                statistics.totalBooks) *
+                              100
+                            }%`,
                           }}
                         />
                       </div>
@@ -603,7 +614,11 @@ export default function LibraryManagementPage() {
                         <div
                           className='h-2 rounded-full bg-red-500'
                           style={{
-                            width: `${(statistics.overdueBooks / statistics.totalBooks) * 100}%`,
+                            width: `${
+                              (statistics.overdueBooks /
+                                statistics.totalBooks) *
+                              100
+                            }%`,
                           }}
                         />
                       </div>

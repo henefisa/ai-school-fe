@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, use, useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -17,7 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -46,6 +45,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { FileUpload } from '@/components/upload/file-upload';
+import { AuthContext } from '@/contexts/auth';
 
 const profileFormSchema = z.object({
   firstName: z
@@ -94,7 +94,7 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
+  const { user } = use(AuthContext);
   const supabase = createClient();
   const { toast } = useToast();
 

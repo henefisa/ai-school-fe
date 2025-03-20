@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -24,6 +23,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeftIcon, CheckIcon } from 'lucide-react';
 import Link from 'next/link';
+import { AuthContext } from '@/contexts/auth';
 
 // Mock book data
 const books = [
@@ -93,7 +93,7 @@ const books = [
 export default function BookDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = use(AuthContext);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [isReserveDialogOpen, setIsReserveDialogOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
@@ -198,7 +198,7 @@ export default function BookDetailsPage() {
                       <p className='text-center text-sm text-muted-foreground'>
                         Due date:{' '}
                         {new Date(
-                          Date.now() + 14 * 24 * 60 * 60 * 1000,
+                          Date.now() + 14 * 24 * 60 * 60 * 1000
                         ).toLocaleDateString()}
                       </p>
                     </div>
@@ -209,7 +209,7 @@ export default function BookDetailsPage() {
                           <span className='font-medium'>Due Date:</span>
                           <span>
                             {new Date(
-                              Date.now() + 14 * 24 * 60 * 60 * 1000,
+                              Date.now() + 14 * 24 * 60 * 60 * 1000
                             ).toLocaleDateString()}
                           </span>
                         </div>
@@ -323,15 +323,15 @@ export default function BookDetailsPage() {
                   book.status === 'available'
                     ? 'bg-green-500'
                     : book.status === 'checked-out'
-                      ? 'bg-red-500'
-                      : 'bg-yellow-500'
+                    ? 'bg-red-500'
+                    : 'bg-yellow-500'
                 }
               >
                 {book.status === 'available'
                   ? 'Available'
                   : book.status === 'checked-out'
-                    ? 'Checked Out'
-                    : 'Reserved'}
+                  ? 'Checked Out'
+                  : 'Reserved'}
               </Badge>
               <Badge variant='outline'>{book.category}</Badge>
             </div>
@@ -410,7 +410,11 @@ export default function BookDetailsPage() {
                             {Array.from({ length: 5 }).map((_, i) => (
                               <svg
                                 key={i}
-                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                                className={`h-4 w-4 ${
+                                  i < review.rating
+                                    ? 'text-yellow-400'
+                                    : 'text-gray-300'
+                                }`}
                                 fill='currentColor'
                                 viewBox='0 0 20 20'
                               >

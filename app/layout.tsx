@@ -4,6 +4,7 @@ import { ReactQueryClientProvider } from '@/components/react-query-client-provid
 import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
+import { AuthContextProvider } from '@/contexts/auth';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,7 +23,7 @@ export default function RootLayout({
     <ReactQueryClientProvider>
       <html lang='en'>
         <body className={inter.className}>
-          {children}
+          <AuthContextProvider>{children}</AuthContextProvider>
           <Toaster />
         </body>
       </html>
