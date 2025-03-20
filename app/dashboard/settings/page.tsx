@@ -18,8 +18,9 @@ import {
   CreditCard,
   Library,
   Server,
+  MapPin,
 } from 'lucide-react';
-
+import AddressManagement from '@/components/settings/address-management';
 import GeneralSettings from '@/components/settings/general-settings';
 import ProfileSettings from '@/components/settings/profile-settings';
 import AccountSettings from '@/components/settings/account-settings';
@@ -52,6 +53,12 @@ export default function SettingsPage() {
         label: 'Account',
         icon: Shield,
         component: <AccountSettings />,
+      },
+      {
+        id: 'addresses',
+        label: 'Addresses',
+        icon: MapPin,
+        component: <AddressManagement />,
       },
     ];
 
