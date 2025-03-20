@@ -36,30 +36,53 @@ export type Database = {
     Tables: {
       addresses: {
         Row: {
-          address_line_1: string | null;
-          address_line_2: string | null;
-          city: string | null;
-          country: string | null;
+          city: string;
+          country: string;
           created_at: string;
           id: string;
+          is_primary: boolean;
+          name: string;
+          profile_id: string;
+          state: string;
+          street: string;
+          type: Database['public']['Enums']['address_type'];
+          zip_code: string;
         };
         Insert: {
-          address_line_1?: string | null;
-          address_line_2?: string | null;
-          city?: string | null;
-          country?: string | null;
+          city?: string;
+          country?: string;
           created_at?: string;
           id?: string;
+          is_primary?: boolean;
+          name?: string;
+          profile_id: string;
+          state?: string;
+          street?: string;
+          type?: Database['public']['Enums']['address_type'];
+          zip_code?: string;
         };
         Update: {
-          address_line_1?: string | null;
-          address_line_2?: string | null;
-          city?: string | null;
-          country?: string | null;
+          city?: string;
+          country?: string;
           created_at?: string;
           id?: string;
+          is_primary?: boolean;
+          name?: string;
+          profile_id?: string;
+          state?: string;
+          street?: string;
+          type?: Database['public']['Enums']['address_type'];
+          zip_code?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'addresses_profile_id_fkey';
+            columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
       };
       parents: {
         Row: {
@@ -233,6 +256,7 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
+      address_type: 'HOME' | 'WORK' | 'OTHER';
       app_role: 'ADMIN' | 'TEACHER' | 'PARENT' | 'STUDENT' | 'STAFF';
       gender: 'MALE' | 'FEMALE' | 'OTHER';
       relationship_to_student: 'MOTHER' | 'FATHER' | 'OTHER';

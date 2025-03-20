@@ -52,58 +52,29 @@ import {
   Star,
   Pencil,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
+import { AddressType } from '@/types/address';
+import { useAuth } from '@/hooks/use-auth';
+import {
+  useDeleteMutation,
+  useInsertMutation,
+  useQuery,
+  useUpdateMutation,
+} from '@supabase-cache-helpers/postgrest-react-query';
+import { createClient } from '@/utils/supabase/client';
+import { getAddressesByProfileId } from '@/queries/address/get-addresses-by-profile-id';
+import { Skeleton } from '../ui/skeleton';
+import { useDisclosure } from '@/hooks/use-disclosure';
+import { Tables } from '@/utils/supabase/database.types';
 
-// Define address type
-type AddressType = 'home' | 'work' | 'other';
-
-// Define address interface
-interface Address {
-  id: string;
-  name: string; // Added custom name field
-  type: AddressType;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  isPrimary: boolean;
-}
-
-// Mock data for initial addresses
-const initialAddresses: Address[] = [
-  {
-    id: 'addr-1',
-    name: 'Main Residence', // Custom name
-    type: 'home',
-    street: '123 Main Street',
-    city: 'Springfield',
-    state: 'IL',
-    zipCode: '62704',
-    country: 'United States',
-    isPrimary: true,
-  },
-  {
-    id: 'addr-2',
-    name: 'Downtown Office', // Custom name
-    type: 'work',
-    street: '456 Corporate Avenue',
-    city: 'Springfield',
-    state: 'IL',
-    zipCode: '62701',
-    country: 'United States',
-    isPrimary: false,
-  },
-];
-
-// Form schema for address validation
 const addressFormSchema = z.object({
   name: z.string().min(1, 'Address name is required.'),
-  type: z.enum(['home', 'work', 'other'], {
+  type: z.enum([AddressType.Home, AddressType.Work, AddressType.Other], {
     required_error: 'Please select an address type.',
   }),
   street: z.string().min(1, 'Street address is required.'),
@@ -111,22 +82,35 @@ const addressFormSchema = z.object({
   state: z.string().min(1, 'State/Province is required.'),
   zipCode: z.string().min(1, 'ZIP/Postal code is required.'),
   country: z.string().min(1, 'Country is required.'),
+  isPrimary: z.boolean().optional(),
 });
 
 type AddressFormValues = z.infer<typeof addressFormSchema>;
 
 export default function AddressManagement() {
-  const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState<Address | null>(null);
+  const { user } = useAuth();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [currentAddress, setCurrentAddress] =
+    useState<Tables<'addresses'> | null>(null);
+  const client = createClient();
+  const { mutateAsync: createAddress, isPending: isPendingCreate } =
+    useInsertMutation(client.from('addresses'), ['id'], '*');
+  const { mutateAsync: updateAddress, isPending: isPendingUpdate } =
+    useUpdateMutation(client.from('addresses'), ['id'], '*');
+  const { mutateAsync: deleteAddress, isPending: isPendingDelete } =
+    useDeleteMutation(client.from('addresses'), ['id']);
+  const { data: addresses, isLoading } = useQuery(
+    getAddressesByProfileId(client, user?.id ?? ''),
+    {
+      enabled: !!user?.id,
+    }
+  );
 
-  // Initialize form
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
     defaultValues: {
       name: '',
-      type: 'home',
+      type: AddressType.Home,
       street: '',
       city: '',
       state: '',
@@ -135,103 +119,118 @@ export default function AddressManagement() {
     },
   });
 
-  // Handle adding a new address
-  const handleAddAddress = (data: AddressFormValues) => {
-    const newAddress: Address = {
-      id: `addr-${Date.now()}`,
-      ...data,
-      isPrimary: addresses.length === 0, // Make it primary if it's the first address
-    };
+  const handleAddAddress = async (values: AddressFormValues) => {
+    if (!user) {
+      return;
+    }
 
-    setAddresses([...addresses, newAddress]);
-    setIsAddDialogOpen(false);
+    await createAddress([
+      {
+        name: values.name,
+        type: values.type,
+        street: values.street,
+        city: values.city,
+        state: values.state,
+        zip_code: values.zipCode,
+        country: values.country,
+        profile_id: user.id,
+      },
+    ]);
+
+    onClose();
     form.reset();
+
     toast({
       title: 'Address Added',
       description: 'Your new address has been added successfully.',
     });
   };
 
-  // Handle editing an address
-  const handleEditAddress = (data: AddressFormValues) => {
+  const handleEditAddress = async (values: AddressFormValues) => {
     if (!currentAddress) return;
 
-    const updatedAddresses = addresses.map((addr) =>
-      addr.id === currentAddress.id ? { ...addr, ...data } : addr
-    );
+    await updateAddress({
+      id: currentAddress.id,
+      name: values.name,
+      type: values.type as AddressType,
+      street: values.street,
+      city: values.city,
+      state: values.state,
+      zip_code: values.zipCode,
+      country: values.country,
+    });
 
-    setAddresses(updatedAddresses);
-    setIsEditDialogOpen(false);
-    setCurrentAddress(null);
+    onClose();
+    form.reset();
+
     toast({
       title: 'Address Updated',
       description: 'Your address has been updated successfully.',
     });
   };
 
-  // Handle deleting an address
-  const handleDeleteAddress = (id: string) => {
-    const addressToDelete = addresses.find((addr) => addr.id === id);
-    const updatedAddresses = addresses.filter((addr) => addr.id !== id);
+  const handleDeleteAddress = async (id: string) => {
+    await deleteAddress({ id });
 
-    // If we're deleting the primary address, make the first remaining address primary
-    if (addressToDelete?.isPrimary && updatedAddresses.length > 0) {
-      updatedAddresses[0].isPrimary = true;
-    }
-
-    setAddresses(updatedAddresses);
     toast({
       title: 'Address Deleted',
       description: 'The address has been removed from your account.',
     });
   };
 
-  // Handle setting an address as primary
-  const handleSetPrimary = (id: string) => {
-    const updatedAddresses = addresses.map((addr) => ({
-      ...addr,
-      isPrimary: addr.id === id,
-    }));
+  const handleSetPrimary = async (id: string) => {
+    await updateAddress({ id, is_primary: true });
 
-    setAddresses(updatedAddresses);
     toast({
       title: 'Primary Address Updated',
       description: 'Your primary address has been updated.',
     });
   };
 
-  // Open edit dialog and populate form with address data
-  const openEditDialog = (address: Address) => {
+  const openAddDialog = () => {
+    form.reset();
+    onOpen();
+  };
+
+  const openEditDialog = (address: Tables<'addresses'>) => {
     setCurrentAddress(address);
     form.reset({
       name: address.name,
-      type: address.type,
+      type: address.type as AddressType,
       street: address.street,
       city: address.city,
       state: address.state,
-      zipCode: address.zipCode,
+      zipCode: address.zip_code,
       country: address.country,
+      isPrimary: address.is_primary,
     });
-    setIsEditDialogOpen(true);
+    onOpen();
   };
 
-  // Get icon based on address type
   const getAddressIcon = (type: AddressType) => {
     switch (type) {
-      case 'home':
+      case AddressType.Home:
         return <Home className='h-4 w-4' />;
-      case 'work':
+      case AddressType.Work:
         return <Building className='h-4 w-4' />;
+      case AddressType.Other:
       default:
         return <MapPin className='h-4 w-4' />;
     }
   };
 
+  const isEdit = !!currentAddress;
+
   return (
     <div className='space-y-6'>
       <div className='flex justify-between items-center'>
         <h3 className='text-lg font-medium'>Your Addresses</h3>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog
+          open={isOpen}
+          onOpenChange={(open) => {
+            open ? openAddDialog() : onClose();
+          }}
+        >
           <DialogTrigger asChild>
             <Button size='sm'>
               <Plus className='mr-2 h-4 w-4' />
@@ -240,14 +239,16 @@ export default function AddressManagement() {
           </DialogTrigger>
           <DialogContent className='sm:max-w-[500px]'>
             <DialogHeader>
-              <DialogTitle>Add New Address</DialogTitle>
+              <DialogTitle>{isEdit ? 'Edit' : 'Add New'} Address</DialogTitle>
               <DialogDescription>
-                Enter the details for your new address.
+                Enter the details for your {isEdit ? 'address' : 'new address'}.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(handleAddAddress)}
+                onSubmit={form.handleSubmit(
+                  isEdit ? handleEditAddress : handleAddAddress
+                )}
                 className='space-y-4'
               >
                 <FormField
@@ -285,9 +286,11 @@ export default function AddressManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value='home'>Home</SelectItem>
-                          <SelectItem value='work'>Work</SelectItem>
-                          <SelectItem value='other'>Other</SelectItem>
+                          <SelectItem value={AddressType.Home}>Home</SelectItem>
+                          <SelectItem value={AddressType.Work}>Work</SelectItem>
+                          <SelectItem value={AddressType.Other}>
+                            Other
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -371,52 +374,48 @@ export default function AddressManagement() {
                     type='button'
                     variant='outline'
                     onClick={() => {
-                      setIsAddDialogOpen(false);
+                      onClose();
                       form.reset();
                     }}
                   >
                     Cancel
                   </Button>
-                  <Button type='submit'>Save Address</Button>
+                  <Button type='submit'>
+                    {isPendingUpdate || isPendingCreate ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        {isEdit ? 'Editing' : 'Saving'} Address
+                      </>
+                    ) : (
+                      <>{isEdit ? 'Edit' : 'Save'} Address</>
+                    )}
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
       </div>
-
-      {addresses.length === 0 ? (
-        <Card>
-          <CardContent className='flex flex-col items-center justify-center py-10'>
-            <MapPin className='h-10 w-10 text-muted-foreground mb-4' />
-            <p className='text-muted-foreground text-center'>
-              You haven't added any addresses yet.
-            </p>
-            <Button
-              variant='outline'
-              className='mt-4'
-              onClick={() => setIsAddDialogOpen(true)}
-            >
-              <Plus className='mr-2 h-4 w-4' />
-              Add Your First Address
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
+      {isLoading ? (
+        <div className='grid gap-4 md:grid-cols-2'>
+          <Skeleton className='w-full h-40' />
+          <Skeleton className='w-full h-40' />
+        </div>
+      ) : addresses?.length ? (
         <div className='grid gap-4 md:grid-cols-2'>
           {addresses.map((address) => (
             <Card
               key={address.id}
-              className={address.isPrimary ? 'border-primary' : ''}
+              className={address.is_primary ? 'border-primary' : ''}
             >
               <CardHeader className='pb-2'>
                 <div className='flex justify-between items-start'>
                   <div className='flex items-center'>
-                    {getAddressIcon(address.type)}
+                    {getAddressIcon(address.type as AddressType)}
                     <CardTitle className='ml-2 text-base'>
                       {address.name}
                     </CardTitle>
-                    {address.isPrimary && (
+                    {address.is_primary && (
                       <Badge
                         variant='outline'
                         className='ml-2 bg-primary/10 text-primary border-primary'
@@ -434,7 +433,7 @@ export default function AddressManagement() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
-                      {!address.isPrimary && (
+                      {!address.is_primary && (
                         <DropdownMenuItem
                           onClick={() => handleSetPrimary(address.id)}
                         >
@@ -450,14 +449,24 @@ export default function AddressManagement() {
                         onClick={() => handleDeleteAddress(address.id)}
                         className='text-destructive focus:text-destructive'
                       >
-                        <Trash2 className='mr-2 h-4 w-4' />
-                        Delete Address
+                        {isPendingDelete ? (
+                          <>
+                            <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                            Deleting
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className='mr-2 h-4 w-4' />
+                            Delete Address
+                          </>
+                        )}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <CardDescription className='ml-6'>
-                  {address.type.charAt(0).toUpperCase() + address.type.slice(1)}{' '}
+                <CardDescription>
+                  {address.type.charAt(0).toUpperCase() +
+                    address.type.slice(1).toLowerCase()}{' '}
                   Address
                 </CardDescription>
               </CardHeader>
@@ -465,7 +474,7 @@ export default function AddressManagement() {
                 <div className='text-sm'>
                   <p>{address.street}</p>
                   <p>
-                    {address.city}, {address.state} {address.zipCode}
+                    {address.city}, {address.state} {address.zip_code}
                   </p>
                   <p>{address.country}</p>
                 </div>
@@ -473,155 +482,20 @@ export default function AddressManagement() {
             </Card>
           ))}
         </div>
+      ) : (
+        <Card>
+          <CardContent className='flex flex-col items-center justify-center py-10'>
+            <MapPin className='h-10 w-10 text-muted-foreground mb-4' />
+            <p className='text-muted-foreground text-center'>
+              You haven't added any addresses yet.
+            </p>
+            <Button variant='outline' className='mt-4' onClick={openAddDialog}>
+              <Plus className='mr-2 h-4 w-4' />
+              Add Your First Address
+            </Button>
+          </CardContent>
+        </Card>
       )}
-
-      {/* Edit Address Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className='sm:max-w-[500px]'>
-          <DialogHeader>
-            <DialogTitle>Edit Address</DialogTitle>
-            <DialogDescription>
-              Update the details for this address.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleEditAddress)}
-              className='space-y-4'
-            >
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address Name</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder='e.g. Main Residence, Summer Home'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Give this address a memorable name
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='type'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select address type' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='home'>Home</SelectItem>
-                        <SelectItem value='work'>Work</SelectItem>
-                        <SelectItem value='other'>Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='street'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Street Address</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder='Enter your street address'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={form.control}
-                  name='city'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input placeholder='City' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='state'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State/Province</FormLabel>
-                      <FormControl>
-                        <Input placeholder='State/Province' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={form.control}
-                  name='zipCode'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ZIP/Postal Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder='ZIP/Postal Code' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='country'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Country</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Country' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    setIsEditDialogOpen(false);
-                    setCurrentAddress(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button type='submit'>Update Address</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
