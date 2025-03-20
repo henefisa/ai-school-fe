@@ -54,7 +54,10 @@ export default function StudentDetailPage({
     gender: data?.profiles.gender,
     dateOfBirth:
       data?.profiles.dob && dayjs(data.profiles.dob).format('DD/MM/YYYY'),
-    address: '123 School Lane, Cityville',
+    address:
+      data?.addresses?.address_line_1 ??
+      data?.addresses?.address_line_2 ??
+      'N/A',
     email: 'emma.johnson@example.com',
     phone: '(555) 123-4567',
     parentName: getDisplayName(data?.parents[0].profiles),
