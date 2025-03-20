@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -59,7 +59,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
 import { AddressType } from '@/types/address';
-import { useAuth } from '@/hooks/use-auth';
 import {
   useDeleteMutation,
   useInsertMutation,
@@ -71,6 +70,7 @@ import { getAddressesByProfileId } from '@/queries/address/get-addresses-by-prof
 import { Skeleton } from '../ui/skeleton';
 import { useDisclosure } from '@/hooks/use-disclosure';
 import { Tables } from '@/utils/supabase/database.types';
+import { AuthContext } from '@/contexts/auth';
 
 const addressFormSchema = z.object({
   name: z.string().min(1, 'Address name is required.'),
@@ -88,7 +88,7 @@ const addressFormSchema = z.object({
 type AddressFormValues = z.infer<typeof addressFormSchema>;
 
 export default function AddressManagement() {
-  const { user } = useAuth();
+  const { user } = use(AuthContext);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentAddress, setCurrentAddress] =
     useState<Tables<'addresses'> | null>(null);
