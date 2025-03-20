@@ -46,7 +46,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { FileUpload } from '@/components/upload/file-upload';
-import lodash from 'lodash';
 
 const profileFormSchema = z.object({
   firstName: z
@@ -115,7 +114,7 @@ export default function ProfileSettings() {
   const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''));
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [fileSelected, setFileSelected] = useState<File>();
+  const [fileSelected, setFileSelected] = useState<File | null>(null);
 
   const defaultValues: Partial<ProfileFormValues> = {
     firstName: '',
@@ -168,15 +167,6 @@ export default function ProfileSettings() {
         dob: data.dob ? data.dob.toISOString().split('T')[0] : null,
       };
 
-      const isDataChanged = !lodash.isEqual(payload, profile);
-      if (!isDataChanged && !fileSelected) {
-        toast({
-          title: 'No changes detected',
-          description: 'You have not made any changes to your profile.',
-        });
-        return;
-      }
-
       if (fileSelected) {
         const response = await upload({
           files: [fileSelected],
@@ -207,6 +197,7 @@ export default function ProfileSettings() {
       await update(payload);
 
       form.reset(defaultValues);
+      setFileSelected(null);
 
       await revalidateTables();
 
@@ -428,7 +419,12 @@ export default function ProfileSettings() {
               </FormItem>
             )}
           />
-          <Button type='submit'>Save Changes</Button>
+          <Button
+            type='submit'
+            disabled={!form.formState.isDirty && !fileSelected}
+          >
+            Save Changes
+          </Button>
         </form>
       </Form>
     </div>
