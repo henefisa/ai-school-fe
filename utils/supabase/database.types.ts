@@ -193,6 +193,8 @@ export type Database = {
           address_id: string | null;
           created_at: string;
           enrollment_date: string | null;
+          gpa: number | null;
+          grade: string;
           id: string;
           profile_id: string;
           status: boolean;
@@ -201,6 +203,8 @@ export type Database = {
           address_id?: string | null;
           created_at?: string;
           enrollment_date?: string | null;
+          gpa?: number | null;
+          grade?: string;
           id?: string;
           profile_id: string;
           status?: boolean;
@@ -209,6 +213,8 @@ export type Database = {
           address_id?: string | null;
           created_at?: string;
           enrollment_date?: string | null;
+          gpa?: number | null;
+          grade?: string;
           id?: string;
           profile_id?: string;
           status?: boolean;

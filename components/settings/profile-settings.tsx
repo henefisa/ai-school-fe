@@ -47,6 +47,8 @@ import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { FileUpload } from '@/components/upload/file-upload';
 import { AuthContext } from '@/contexts/auth';
 
+const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g;
+
 const profileFormSchema = z.object({
   firstName: z
     .string()
@@ -75,7 +77,11 @@ const profileFormSchema = z.object({
     .max(15, {
       message: 'Phone number must not be longer than 15 characters.',
     })
+    .regex(phoneRegex, {
+      message: 'Phone number must contain only numbers and can start with +.',
+    })
     .optional(),
+
   gender: z
     .enum(['MALE', 'FEMALE', 'OTHER'], {
       message: 'Gender must be male, female, or other.',
