@@ -7,19 +7,16 @@ import { BellIcon, MenuIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { RoleSwitcher } from '@/components/role-switcher';
 import { Profile } from '@/components/header/profile';
-import { createClient } from '@/utils/supabase/client';
-import { getRole } from '@/queries/role/get-role';
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { useRoleStore } from '@/contexts/role';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
-  const { data } = useQuery(getRole(supabase));
+  const role = useRoleStore((state) => state.role);
 
-  if (!data) {
+  if (!role) {
     return null;
   }
 
@@ -36,7 +33,7 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='w-72 p-0'>
-                <DashboardSidebar role={data.role} />
+                <DashboardSidebar role={role} />
               </SheetContent>
             </Sheet>
             <span className='text-lg font-bold'>EduManage</span>
@@ -56,7 +53,7 @@ export default function DashboardLayout({
       </header>
       <div className='flex flex-1'>
         <aside className='hidden w-64 border-r md:block'>
-          <DashboardSidebar role={data.role} />
+          <DashboardSidebar role={role} />
         </aside>
         <main className='flex-1 overflow-auto p-4 md:p-6'>{children}</main>
       </div>
