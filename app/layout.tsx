@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { AuthContextProvider } from '@/contexts/auth';
+import { RoleContextProvider } from '@/contexts/role';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +24,9 @@ export default function RootLayout({
     <ReactQueryClientProvider>
       <html lang='en'>
         <body className={inter.className}>
-          <AuthContextProvider>{children}</AuthContextProvider>
+          <AuthContextProvider>
+            <RoleContextProvider>{children}</RoleContextProvider>
+          </AuthContextProvider>
           <Toaster />
         </body>
       </html>
