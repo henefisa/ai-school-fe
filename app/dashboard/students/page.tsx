@@ -51,10 +51,12 @@ export default function StudentsPage() {
             Manage student information, records, and performance.
           </p>
         </div>
-        <Button className='sm:w-auto'>
-          <PlusCircle className='mr-2 h-4 w-4' />
-          Add Student
-        </Button>
+        <Link href='students/create'>
+          <Button className='sm:w-auto'>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Add Student
+          </Button>
+        </Link>
       </div>
       <Card>
         <CardHeader className='pb-3'>

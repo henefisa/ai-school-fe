@@ -36,7 +36,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { getStudentById } from '@/queries/student/get-student-by-id';
 import { getDisplayName } from '@/utils/get-display-name';
-import dayjs from 'dayjs';
+import { format } from 'date-fns';
 
 export default function StudentDetailPage({
   params,
@@ -53,18 +53,16 @@ export default function StudentDetailPage({
     grade: '10A',
     gender: data?.profiles.gender,
     dateOfBirth:
-      data?.profiles.dob && dayjs(data.profiles.dob).format('DD/MM/YYYY'),
-    address:
-      data?.addresses?.address_line_1 ??
-      data?.addresses?.address_line_2 ??
-      'N/A',
+      data?.profiles.dob && format(new Date(data.profiles.dob), 'dd/MM/yyyy'),
+    address: data?.addresses?.street ?? 'N/A',
     email: 'emma.johnson@example.com',
     phone: '(555) 123-4567',
     parentName: getDisplayName(data?.parents[0].profiles),
     parentEmail: data?.parents[0]?.profiles?.email,
     parentPhone: data?.parents[0]?.profiles?.phone,
     enrollmentDate:
-      data?.enrollment_date && dayjs(data.enrollment_date).format('DD/MM/YYYY'),
+      data?.enrollment_date &&
+      format(new Date(data.enrollment_date), 'dd/MM/yyyy'),
     status: data?.status ? 'Active' : 'Inactive',
     attendance: 98,
     gpa: 3.8,
