@@ -1,6 +1,5 @@
 'use client';
 
-import { use } from 'react';
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -17,19 +16,15 @@ import { useRouter } from 'next/navigation';
 import { getDisplayName } from '@/utils/get-display-name';
 import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { createClient } from '@/utils/supabase/client';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 export const Profile: React.FC = () => {
-  const { user } = use(AuthContext);
+  const { user, logout } = useAuth();
   const supabase = createClient();
   const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''), {
     enabled: !!user?.id,
   });
   const router = useRouter();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
 
   return (
     <DropdownMenu>
@@ -58,9 +53,9 @@ export const Profile: React.FC = () => {
         <DropdownMenuItem>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => {
+          onClick={async () => {
+            await logout();
             router.push('/auth/login');
-            handleLogout();
           }}
         >
           Log out

@@ -51,6 +51,7 @@
     "dayjs": "^1.11.13",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
+    "lodash.merge": "^4.6.2",
     "lucide-react": "^0.454.0",
     "nanoid": "^5.1.4",
     "next": "15.1.0",
@@ -68,6 +69,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@types/lodash.merge": "^4.6.9",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

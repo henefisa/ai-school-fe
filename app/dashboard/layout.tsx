@@ -7,14 +7,14 @@ import { BellIcon, MenuIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { RoleSwitcher } from '@/components/role-switcher';
 import { Profile } from '@/components/header/profile';
-import { useRoleStore } from '@/contexts/role';
+import { useStoreContext } from '@/contexts/store';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const role = useRoleStore((state) => state.role);
+  const role = useStoreContext((state) => state.userRole.role);
 
   if (!role) {
     return null;

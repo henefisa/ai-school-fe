@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { type User } from '@supabase/supabase-js';
+import { useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
+import { useStoreContext } from '@/contexts/store';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoreContext((state) => state.auth.user);
+  const setUser = useStoreContext((state) => state.auth.setUser);
+
   const supabase = createClient();
 
   const logout = async () => {
     await supabase.auth.signOut();
+    setUser(null);
   };
 
   useEffect(() => {

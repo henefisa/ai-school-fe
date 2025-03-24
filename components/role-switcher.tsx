@@ -10,11 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useRoleStore } from '@/contexts/role';
+import { useRole } from '@/hooks/use-role';
 import { useToast } from '@/hooks/use-toast';
-import { Role } from '@/stores/role-store';
-import { createClient } from '@/utils/supabase/client';
-import { useUpdateMutation } from '@supabase-cache-helpers/postgrest-react-query';
+import { Role } from '@/zustand/slices/user-role';
 import { LightbulbIcon as SwitchIcon } from 'lucide-react';
 
 const options: { label: string; value: Role }[] = [
@@ -26,53 +24,35 @@ const options: { label: string; value: Role }[] = [
 ];
 
 export function RoleSwitcher() {
+  const { role, setRole } = useRole();
   const { toast } = useToast();
-  const supabase = createClient();
-  const data = useRoleStore((state) => state);
 
-  const { mutateAsync: update } = useUpdateMutation(
-    supabase.from('user_roles'),
-    ['id'],
-    '*'
-  );
+  const handleRoleChange = (newRole: string) => {
+    const formattedRole =
+      newRole.charAt(0).toUpperCase() + newRole.slice(1).toLowerCase();
 
-  const handleRoleChange = async (newRole: string) => {
-    try {
-      await update({
-        id: data.id,
-        role: newRole as Role,
-        user_id: data.userId,
-      });
+    setRole(newRole as Role);
 
-      toast({
-        title: 'Role updated',
-        description: `Your role has been changed to ${newRole}.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Update failed',
-        description:
-          'An error occurred while updating your role. Please try again.',
-        variant: 'destructive',
-      });
-    }
+    toast({
+      title: 'Role updated',
+      description: `Your role has been changed to ${formattedRole}.`,
+    });
   };
+
+  if (!role) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant='outline' size='sm' className='capitalize'>
           <SwitchIcon className='mr-2 h-4 w-4' />
-          {data.role.toLowerCase()}
+          {role.toLowerCase()}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-48'>
         <DropdownMenuLabel>Select your role</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup
-          value={data.role}
-          onValueChange={handleRoleChange}
-        >
+        <DropdownMenuRadioGroup value={role} onValueChange={handleRoleChange}>
           {options.map((option) => (
             <DropdownMenuRadioItem key={option.value} value={option.value}>
               {option.label}
