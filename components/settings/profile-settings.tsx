@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, use, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -45,7 +45,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { FileUpload } from '@/components/upload/file-upload';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g;
 
@@ -100,7 +100,7 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileSettings() {
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const supabase = createClient();
   const { toast } = useToast();
 

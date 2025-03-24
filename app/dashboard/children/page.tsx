@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,7 +14,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Calendar, MessageSquare, Search, User } from 'lucide-react';
-import { AuthContext } from '@/contexts/auth';
 import { createClient } from '@/utils/supabase/client';
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { getStudentByParentId } from '@/queries/student/get-student-by-parent-id';
@@ -25,9 +24,10 @@ import { AssignmentsTab } from '@/app/dashboard/children/assignments-tab';
 import { CalendarTab } from '@/app/dashboard/children/calendar-tab';
 import { TeachersTab } from '@/app/dashboard/children/teachers-tab';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ChildrenPage() {
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const client = createClient();
   const { data } = useQuery(getStudentByParentId(client, user?.id ?? ''));
   const [selectedChild, setSelectedChild] = useState(data?.students[0].id);

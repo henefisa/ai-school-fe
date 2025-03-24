@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +23,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeftIcon, CheckIcon } from 'lucide-react';
 import Link from 'next/link';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 // Mock book data
 const books = [
@@ -93,7 +93,7 @@ const books = [
 export default function BookDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const [isReserveDialogOpen, setIsReserveDialogOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);

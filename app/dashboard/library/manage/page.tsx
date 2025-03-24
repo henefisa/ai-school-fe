@@ -49,7 +49,7 @@ import {
   AlertCircleIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 // Mock data for books
 const books = [
@@ -153,7 +153,7 @@ const statistics = {
 };
 
 export default function LibraryManagementPage() {
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('books');

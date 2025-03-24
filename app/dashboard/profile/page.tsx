@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, use, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -52,7 +52,7 @@ import { createClient } from '@/utils/supabase/client';
 import { useUpload } from '@supabase-cache-helpers/storage-react-query';
 import { nanoid } from 'nanoid';
 import { Loader2, SaveIcon } from 'lucide-react';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 // Define the form schema
 const profileFormSchema = z.object({
@@ -92,7 +92,7 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const supabase = createClient();
   const { toast } = useToast();
   const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''), {

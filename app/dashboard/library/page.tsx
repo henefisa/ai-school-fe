@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -31,7 +31,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { BookOpenIcon, SearchIcon, BookIcon, FileTextIcon } from 'lucide-react';
 import Link from 'next/link';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 // Mock data for books
 const books = [
@@ -154,7 +154,7 @@ const categories = [
 ];
 
 export default function LibraryPage() {
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeTab, setActiveTab] = useState('books');

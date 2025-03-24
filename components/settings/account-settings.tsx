@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -25,7 +25,7 @@ import {
 import { Eye, EyeOff, Lock, ShieldCheck } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { AuthContext } from '@/contexts/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 const passwordFormSchema = z
   .object({
@@ -47,7 +47,7 @@ const passwordFormSchema = z
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function AccountSettings() {
-  const { user } = use(AuthContext);
+  const { user } = useAuth();
   const supabase = createClient();
   const { toast } = useToast();
 
