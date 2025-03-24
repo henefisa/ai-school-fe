@@ -1,4 +1,5 @@
 import { formSchema } from '@/app/dashboard/students/create/page';
+import { SingleDatePicker } from '@/components/date-picker/single-date-picker';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,6 +9,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,9 +31,15 @@ import { z } from 'zod';
 
 interface AcademicProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
+  handleNext: () => void;
+  handlePrevious: () => void;
 }
 
-export const Academic: React.FC<AcademicProps> = ({ form }) => {
+export const Academic: React.FC<AcademicProps> = ({
+  form,
+  handleNext,
+  handlePrevious,
+}) => {
   return (
     <Card>
       <CardHeader>
@@ -34,66 +48,110 @@ export const Academic: React.FC<AcademicProps> = ({ form }) => {
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label htmlFor='grade'>Grade/Class</Label>
-            <Select defaultValue='10A'>
-              <SelectTrigger id='grade'>
-                <SelectValue placeholder='Select grade' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='9A'>Grade 9A</SelectItem>
-                <SelectItem value='9B'>Grade 9B</SelectItem>
-                <SelectItem value='10A'>Grade 10A</SelectItem>
-                <SelectItem value='10B'>Grade 10B</SelectItem>
-                <SelectItem value='11A'>Grade 11A</SelectItem>
-                <SelectItem value='11B'>Grade 11B</SelectItem>
-                <SelectItem value='12A'>Grade 12A</SelectItem>
-                <SelectItem value='12B'>Grade 12B</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='enrollment-date'>Enrollment Date</Label>
-            <Input type='date' id='enrollment-date' required />
-          </div>
-        </div>
-
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label htmlFor='previous-school'>Previous School (Optional)</Label>
-            <Input
-              id='previous-school'
-              placeholder='Enter previous school name'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='academic-year'>Academic Year</Label>
-            <Select defaultValue='2024-2025'>
-              <SelectTrigger id='academic-year'>
-                <SelectValue placeholder='Select academic year' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='2023-2024'>2023-2024</SelectItem>
-                <SelectItem value='2024-2025'>2024-2025</SelectItem>
-                <SelectItem value='2025-2026'>2025-2026</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className='space-y-2'>
-          <Label htmlFor='additional-notes'>Additional Notes (Optional)</Label>
-          <Textarea
-            id='additional-notes'
-            placeholder='Enter any additional academic information'
+          <FormField
+            control={form.control}
+            name='academic.grade'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Grade/Class</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select grade' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='9A'>Grade 9A</SelectItem>
+                    <SelectItem value='9B'>Grade 9B</SelectItem>
+                    <SelectItem value='10A'>Grade 10A</SelectItem>
+                    <SelectItem value='10B'>Grade 10B</SelectItem>
+                    <SelectItem value='11A'>Grade 11A</SelectItem>
+                    <SelectItem value='11B'>Grade 11B</SelectItem>
+                    <SelectItem value='12A'>Grade 12A</SelectItem>
+                    <SelectItem value='12B'>Grade 12B</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='academic.enrollmentDate'
+            render={({ field }) => (
+              <SingleDatePicker field={field} label='Enrollment Date' />
+            )}
           />
         </div>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='academic.previousSchool'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Previous School (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type='text'
+                    placeholder='Enter previous school name'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='academic.academicYear'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Academic Year</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select academic year' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='2023-2024'>2023-2024</SelectItem>
+                    <SelectItem value='2024-2025'>2024-2025</SelectItem>
+                    <SelectItem value='2025-2026'>2025-2026</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name='academic.additionalNotes'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Additional Notes (Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder='Enter any additional academic information'
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
       <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button'>
+        <Button variant='outline' type='button' onClick={handlePrevious}>
           Previous
         </Button>
-        <Button type='button'>Next</Button>
+        <Button type='button' onClick={handleNext}>
+          Next
+        </Button>
       </CardFooter>
     </Card>
   );

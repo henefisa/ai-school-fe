@@ -17,67 +17,82 @@ import { Gender } from '@/types/profile';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
 
+export enum StudentTab {
+  Personal = 'personal',
+  Contact = 'contact',
+  Academic = 'academic',
+  Parent = 'parent',
+}
+
+const personalSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  dob: z.date({ message: 'Date of birth is required' }),
+  gender: z.nativeEnum(Gender),
+  studentId: z.string().optional(),
+  photo: z
+    .instanceof(File)
+    .refine((file) => file.size < 5 * 1024 * 1024, {
+      message: 'File size must be less than 5MB',
+    })
+    .nullable(),
+});
+
+const contactSchema = z.object({
+  street: z.string().min(1, 'Street address is required'),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State/Province is required'),
+  zipCode: z.string().min(1, 'Zip code is required'),
+  country: z.string().min(1, 'Country is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email'),
+  phone: z.string().min(1, 'Phone number is required'),
+});
+
+const academicSchema = z.object({
+  grade: z.string().min(1, 'Grade is required'),
+  enrollmentDate: z.date().nullable(),
+  previousSchool: z.string().optional(),
+  academicYear: z.string().min(1, 'Academic year is required'),
+  additionalNotes: z.string().optional(),
+});
+
+const parentSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  relationship: z.string().min(1, 'Relationship is required'),
+  email: z.string().min(1, 'Email is required').email('Invalid email'),
+  phoneNumber: z.string().min(1, 'Phone number is required'),
+  address: z.string().min(1, 'Address is required'),
+  emergencyContact: z.string().min(1, 'Emergency contact is required'),
+});
+
 export const formSchema = z.object({
-  student: z.object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
-    dob: z.date().nullable(),
-    gender: z.nativeEnum(Gender),
-    studentId: z.string().optional(),
-    photo: z
-      .instanceof(File)
-      .refine((file) => file.size < 5 * 1024 * 1024, {
-        message: 'File size must be less than 5MB',
-      })
-      .nullable(),
-  }),
-  contact: z.object({
-    address: z.string(),
-    city: z.string(),
-    state: z.string(),
-    zip_code: z.string(),
-    country: z.string(),
-    email: z.string().email('Invalid email'),
-    phone: z.string(),
-  }),
-  academic: z.object({
-    grade: z.string(),
-    enrollmentDate: z.date().nullable(),
-    previousSchool: z.string().nullable(),
-    academicYear: z.string(),
-    additionalNotes: z.string(),
-  }),
-  parent: z.object({
-    name: z.string().min(1, 'Name is required'),
-    relationship: z.string().min(1, 'Relationship is required'),
-    email: z.string().email('Invalid email'),
-    phoneNumber: z.string(),
-    address: z.string(),
-    emergencyContact: z.string(),
-  }),
+  personal: personalSchema,
+  contact: contactSchema,
+  academic: academicSchema,
+  parent: parentSchema,
 });
 
 export default function CreateStudentPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState(StudentTab.Personal);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      student: {
+      personal: {
         firstName: '',
         lastName: '',
-        dob: null,
+        dob: undefined,
         photo: null,
         gender: Gender.Male,
         studentId: '',
       },
       contact: {
-        address: '',
+        street: '',
         city: '',
         state: '',
-        zip_code: '',
+        zipCode: '',
         country: '',
         email: '',
         phone: '',
@@ -85,7 +100,7 @@ export default function CreateStudentPage() {
       academic: {
         grade: '',
         enrollmentDate: null,
-        previousSchool: null,
+        previousSchool: '',
         academicYear: '',
         additionalNotes: '',
       },
@@ -100,15 +115,8 @@ export default function CreateStudentPage() {
     },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // Simulate API call to create student
-    setTimeout(() => {
-      setIsLoading(false);
-      router.push('/dashboard/students');
-    }, 1500);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    console.log(values);
   };
 
   return (
@@ -124,29 +132,69 @@ export default function CreateStudentPage() {
         </div>
       </div>
       <Form {...form}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={(tab) => setActiveTab(tab as StudentTab)}
             className='space-y-4'
           >
             <TabsList>
-              <TabsTrigger value='personal'>Personal Information</TabsTrigger>
-              <TabsTrigger value='contact'>Contact Information</TabsTrigger>
-              <TabsTrigger value='academic'>Academic Information</TabsTrigger>
-              <TabsTrigger value='parent'>Parent/Guardian</TabsTrigger>
+              <TabsTrigger value={StudentTab.Personal}>
+                Personal Information
+              </TabsTrigger>
+              <TabsTrigger value={StudentTab.Contact}>
+                Contact Information
+              </TabsTrigger>
+              <TabsTrigger value={StudentTab.Academic}>
+                Academic Information
+              </TabsTrigger>
+              <TabsTrigger value={StudentTab.Parent}>
+                Parent/Guardian
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value='personal' className='space-y-4'>
-              <Personal form={form} />
+            <TabsContent value={StudentTab.Personal} className='space-y-4'>
+              <Personal
+                form={form}
+                handleNext={async () => {
+                  const isValid = await form.trigger('personal');
+
+                  if (isValid) {
+                    setActiveTab(StudentTab.Contact);
+                  }
+                }}
+              />
             </TabsContent>
-            <TabsContent value='contact' className='space-y-4'>
-              <Contact form={form} />
+            <TabsContent value={StudentTab.Contact} className='space-y-4'>
+              <Contact
+                form={form}
+                handleNext={async () => {
+                  const isValid = await form.trigger('contact');
+
+                  if (isValid) {
+                    setActiveTab(StudentTab.Academic);
+                  }
+                }}
+                handlePrevious={() => setActiveTab(StudentTab.Personal)}
+              />
             </TabsContent>
-            <TabsContent value='academic' className='space-y-4'>
-              <Academic form={form} />
+            <TabsContent value={StudentTab.Academic} className='space-y-4'>
+              <Academic
+                form={form}
+                handleNext={async () => {
+                  const isValid = await form.trigger('academic');
+
+                  if (isValid) {
+                    setActiveTab(StudentTab.Parent);
+                  }
+                }}
+                handlePrevious={() => setActiveTab(StudentTab.Contact)}
+              />
             </TabsContent>
-            <TabsContent value='parent' className='space-y-4'>
-              <Parent form={form} />
+            <TabsContent value={StudentTab.Parent} className='space-y-4'>
+              <Parent
+                form={form}
+                handlePrevious={() => setActiveTab(StudentTab.Academic)}
+              />
             </TabsContent>
           </Tabs>
         </form>

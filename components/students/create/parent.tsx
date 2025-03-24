@@ -8,6 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -24,9 +31,10 @@ import { z } from 'zod';
 
 interface ParentProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
+  handlePrevious: () => void;
 }
 
-export const Parent: React.FC<ParentProps> = ({ form }) => {
+export const Parent: React.FC<ParentProps> = ({ form, handlePrevious }) => {
   const isLoading = false;
 
   return (
@@ -39,64 +47,113 @@ export const Parent: React.FC<ParentProps> = ({ form }) => {
       </CardHeader>
       <CardContent className='space-y-4'>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label htmlFor='parent-name'>Parent/Guardian Name</Label>
-            <Input id='parent-name' placeholder='Enter full name' required />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='relationship'>Relationship</Label>
-            <Select defaultValue='parent'>
-              <SelectTrigger id='relationship'>
-                <SelectValue placeholder='Select relationship' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='parent'>Parent</SelectItem>
-                <SelectItem value='guardian'>Legal Guardian</SelectItem>
-                <SelectItem value='other'>Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label htmlFor='parent-email'>Email Address</Label>
-            <Input
-              id='parent-email'
-              type='email'
-              placeholder='Enter email address'
-              required
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='parent-phone'>Phone Number</Label>
-            <Input
-              id='parent-phone'
-              type='tel'
-              placeholder='Enter phone number'
-              required
-            />
-          </div>
-        </div>
-
-        <div className='space-y-2'>
-          <Label htmlFor='parent-address'>
-            Address (if different from student)
-          </Label>
-          <Textarea id='parent-address' placeholder='Enter full address' />
-        </div>
-
-        <div className='space-y-2'>
-          <Label htmlFor='emergency-contact'>Emergency Contact</Label>
-          <Input
-            id='emergency-contact'
-            placeholder='Enter emergency contact name and number'
-            required
+          <FormField
+            control={form.control}
+            name='parent.name'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Parent/Guardian Name</FormLabel>
+                <FormControl>
+                  <Input type='text' placeholder='Enter full name' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='parent.relationship'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Relationship</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select relationship' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value='parent'>Parent</SelectItem>
+                    <SelectItem value='guardian'>Legal Guardian</SelectItem>
+                    <SelectItem value='other'>Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormItem>
+            )}
           />
         </div>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='parent.email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email Address</FormLabel>
+                <FormControl>
+                  <Input
+                    type='email'
+                    placeholder='Enter email address'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='parent.phoneNumber'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input
+                    type='tel'
+                    placeholder='Enter phone number'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name='parent.address'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address (if different from student)</FormLabel>
+              <FormControl>
+                <Textarea {...field} placeholder='Enter full address' />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='parent.emergencyContact'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Emergency Contact Number</FormLabel>
+              <FormControl>
+                <Input
+                  type='tel'
+                  placeholder='Enter emergency contact number'
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </CardContent>
       <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button'>
+        <Button variant='outline' type='button' onClick={handlePrevious}>
           Previous
         </Button>
         <Button type='submit' disabled={isLoading}>

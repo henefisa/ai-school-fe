@@ -24,9 +24,10 @@ import { z } from 'zod';
 
 interface PersonalProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
+  handleNext: () => void;
 }
 
-export const Personal: React.FC<PersonalProps> = ({ form }) => {
+export const Personal: React.FC<PersonalProps> = ({ form, handleNext }) => {
   return (
     <Card>
       <CardHeader>
@@ -39,7 +40,7 @@ export const Personal: React.FC<PersonalProps> = ({ form }) => {
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <FormField
             control={form.control}
-            name='student.firstName'
+            name='personal.firstName'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>First Name</FormLabel>
@@ -56,7 +57,7 @@ export const Personal: React.FC<PersonalProps> = ({ form }) => {
           />
           <FormField
             control={form.control}
-            name='student.lastName'
+            name='personal.lastName'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Last Name</FormLabel>
@@ -71,14 +72,18 @@ export const Personal: React.FC<PersonalProps> = ({ form }) => {
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <FormField
             control={form.control}
-            name='student.dob'
+            name='personal.dob'
             render={({ field }) => (
-              <SingleDatePicker field={field} label='Date of Birth' />
+              <SingleDatePicker
+                field={field}
+                label='Date of Birth'
+                CalendarProps={{ disabled: (date) => date > new Date() }}
+              />
             )}
           />
           <FormField
             control={form.control}
-            name='student.gender'
+            name='personal.gender'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Gender</FormLabel>
@@ -115,7 +120,7 @@ export const Personal: React.FC<PersonalProps> = ({ form }) => {
         </div>
         <FormField
           control={form.control}
-          name='student.studentId'
+          name='personal.studentId'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Student ID (Optional)</FormLabel>
@@ -133,7 +138,7 @@ export const Personal: React.FC<PersonalProps> = ({ form }) => {
 
         <FormField
           control={form.control}
-          name='student.photo'
+          name='personal.photo'
           render={({ field: { value, onChange, ...fieldProps } }) => (
             <FormItem>
               <FormLabel>Photo (Optional)</FormLabel>
@@ -156,7 +161,9 @@ export const Personal: React.FC<PersonalProps> = ({ form }) => {
         <Button variant='outline' type='button' disabled>
           Previous
         </Button>
-        <Button type='button'>Next</Button>
+        <Button type='button' onClick={handleNext}>
+          Next
+        </Button>
       </CardFooter>
     </Card>
   );

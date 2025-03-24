@@ -10,7 +10,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { Calendar } from '../ui/calendar';
+import { Calendar, CalendarProps } from '../ui/calendar';
 
 export interface SingleDatePickerProps {
   field: any;
@@ -18,6 +18,7 @@ export interface SingleDatePickerProps {
   description?: React.ReactNode;
   disabled?: boolean;
   placeholder?: string;
+  CalendarProps?: CalendarProps;
 }
 
 export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
@@ -26,6 +27,7 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
   description,
   disabled,
   placeholder,
+  CalendarProps,
 }) => {
   return (
     <FormItem className='flex flex-col'>
@@ -52,10 +54,10 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
         </PopoverTrigger>
         <PopoverContent className='w-auto p-0' align='start'>
           <Calendar
+            {...CalendarProps}
             mode='single'
             selected={field.value}
-            onSelect={field.onChange}
-            disabled={(date) => date < new Date()}
+            onSelect={field.onChang}
             initialFocus
           />
         </PopoverContent>
