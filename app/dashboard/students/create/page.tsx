@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { Gender } from '@/types/profile';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
+import { createClient } from '@/utils/supabase/client';
 
 export enum StudentTab {
   Personal = 'personal',
@@ -116,7 +117,7 @@ export default function CreateStudentPage() {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+    // console.log(values);
   };
 
   return (

@@ -1,5 +1,6 @@
 'use client';
 
+import { createUser } from '@/app/actions/create-student';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ import {
 } from '@/queries/student/get-students';
 import { getDisplayName } from '@/utils/get-display-name';
 import { createClient } from '@/utils/supabase/client';
+import { createClient as createServerClient } from '@/utils/supabase/server';
 import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
 import { Download, PlusCircle, Search } from 'lucide-react';
 import Link from 'next/link';
