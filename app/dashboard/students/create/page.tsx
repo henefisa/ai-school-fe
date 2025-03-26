@@ -1,10 +1,9 @@
 'use client';
 
 import type React from 'react';
-import { useState } from 'react';
+import { startTransition, useActionState, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Academic } from '@/components/students/create/academic';
 import { Contact } from '@/components/students/create/contact';
 import { Parent } from '@/components/students/create/parent';
@@ -16,7 +15,9 @@ import { z } from 'zod';
 import { Gender } from '@/types/profile';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
-import { createClient } from '@/utils/supabase/client';
+import { onSubmitAction } from './actions';
+import { formSchema } from './schema';
+import { flattenObjectToFormData } from '@/utils/flatten-object-to-form-data';
 
 export enum StudentTab {
   Personal = 'personal',
@@ -25,58 +26,14 @@ export enum StudentTab {
   Parent = 'parent',
 }
 
-const personalSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  dob: z.date({ message: 'Date of birth is required' }),
-  gender: z.nativeEnum(Gender),
-  studentId: z.string().optional(),
-  photo: z
-    .instanceof(File)
-    .refine((file) => file.size < 5 * 1024 * 1024, {
-      message: 'File size must be less than 5MB',
-    })
-    .nullable(),
-});
-
-const contactSchema = z.object({
-  street: z.string().min(1, 'Street address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().min(1, 'State/Province is required'),
-  zipCode: z.string().min(1, 'Zip code is required'),
-  country: z.string().min(1, 'Country is required'),
-  email: z.string().min(1, 'Email is required').email('Invalid email'),
-  phone: z.string().min(1, 'Phone number is required'),
-});
-
-const academicSchema = z.object({
-  grade: z.string().min(1, 'Grade is required'),
-  enrollmentDate: z.date().nullable(),
-  previousSchool: z.string().optional(),
-  academicYear: z.string().min(1, 'Academic year is required'),
-  additionalNotes: z.string().optional(),
-});
-
-const parentSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  relationship: z.string().min(1, 'Relationship is required'),
-  email: z.string().min(1, 'Email is required').email('Invalid email'),
-  phoneNumber: z.string().min(1, 'Phone number is required'),
-  address: z.string().min(1, 'Address is required'),
-  emergencyContact: z.string().min(1, 'Emergency contact is required'),
-});
-
-export const formSchema = z.object({
-  personal: personalSchema,
-  contact: contactSchema,
-  academic: academicSchema,
-  parent: parentSchema,
-});
-
 export default function CreateStudentPage() {
-  const router = useRouter();
+  const [state, formAction] = useActionState(onSubmitAction, {
+    isSuccess: false,
+    message: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(StudentTab.Personal);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -84,8 +41,8 @@ export default function CreateStudentPage() {
       personal: {
         firstName: '',
         lastName: '',
-        dob: undefined,
-        photo: null,
+        dob: '',
+        photo: undefined,
         gender: Gender.Male,
         studentId: '',
       },
@@ -100,7 +57,7 @@ export default function CreateStudentPage() {
       },
       academic: {
         grade: '',
-        enrollmentDate: null,
+        enrollmentDate: '',
         previousSchool: '',
         academicYear: '',
         additionalNotes: '',
@@ -116,8 +73,10 @@ export default function CreateStudentPage() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // console.log(values);
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    startTransition(() => {
+      formAction(flattenObjectToFormData(values));
+    });
   };
 
   return (
@@ -133,7 +92,7 @@ export default function CreateStudentPage() {
         </div>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs
             value={activeTab}
             onValueChange={(tab) => setActiveTab(tab as StudentTab)}

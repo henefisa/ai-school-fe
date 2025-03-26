@@ -1,4 +1,4 @@
-import { formSchema } from '@/app/dashboard/students/create/page';
+import { formSchema } from '@/app/dashboard/students/create/schema';
 import { Button } from '@/components/ui/button';
 import {
   Card,

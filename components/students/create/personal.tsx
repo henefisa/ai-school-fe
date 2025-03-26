@@ -1,4 +1,4 @@
-import { formSchema } from '@/app/dashboard/students/create/page';
+import { formSchema } from '@/app/dashboard/students/create/schema';
 import { SingleDatePicker } from '@/components/date-picker/single-date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -114,6 +114,11 @@ export const Personal: React.FC<PersonalProps> = ({ form, handleNext }) => {
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />
+                <input
+                  type='hidden'
+                  name={field.name}
+                  value={field.value ?? ''}
+                />
               </FormItem>
             )}
           />
@@ -127,8 +132,8 @@ export const Personal: React.FC<PersonalProps> = ({ form, handleNext }) => {
               <FormControl>
                 <Input
                   type='text'
-                  {...field}
                   placeholder='Will be auto-generated if left blank'
+                  {...field}
                 />
               </FormControl>
               <FormMessage />

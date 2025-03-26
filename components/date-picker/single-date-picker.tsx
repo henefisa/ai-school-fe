@@ -8,7 +8,7 @@ import {
   FormMessage,
 } from '../ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { format } from 'date-fns';
+import { format, formatDate } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { Calendar, CalendarProps } from '../ui/calendar';
 
@@ -18,6 +18,10 @@ export interface SingleDatePickerProps {
   description?: React.ReactNode;
   disabled?: boolean;
   placeholder?: string;
+  /**
+   * Enabled by default. If set to false, the field will return a Date object instead of a string.
+   */
+  stringMode?: boolean;
   CalendarProps?: CalendarProps;
 }
 
@@ -27,6 +31,7 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
   description,
   disabled,
   placeholder,
+  stringMode = true,
   CalendarProps,
 }) => {
   return (
@@ -56,13 +61,32 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
           <Calendar
             {...CalendarProps}
             mode='single'
-            selected={field.value}
-            onSelect={field.onChang}
+            selected={
+              typeof field.value === 'string'
+                ? new Date(field.value)
+                : field.value
+            }
+            onSelect={
+              stringMode
+                ? (day) => field.onChange(day && formatDate(day, 'yyyy-MM-dd'))
+                : field.onChange
+            }
             initialFocus
           />
         </PopoverContent>
       </Popover>
       {description && <FormDescription>{description}</FormDescription>}
+      <input
+        type='hidden'
+        name={field.name}
+        value={
+          stringMode
+            ? field.value
+            : field.value
+            ? formatDate(field.value, 'yyyy-MM-dd')
+            : undefined
+        }
+      />
       <FormMessage />
     </FormItem>
   );

@@ -1,4 +1,4 @@
-import { formSchema } from '@/app/dashboard/students/create/page';
+import { formSchema } from '@/app/dashboard/students/create/schema';
 import { SingleDatePicker } from '@/components/date-picker/single-date-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,

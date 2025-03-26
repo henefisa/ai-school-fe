@@ -1,4 +1,4 @@
-import { formSchema } from '@/app/dashboard/students/create/page';
+import { formSchema } from '@/app/dashboard/students/create/schema';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -118,7 +118,7 @@ export const Contact: React.FC<ContactProps> = ({
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
           <FormField
             control={form.control}
-            name='contact.country'
+            name='contact.email'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email Address</FormLabel>
@@ -135,7 +135,7 @@ export const Contact: React.FC<ContactProps> = ({
           />
           <FormField
             control={form.control}
-            name='contact.country'
+            name='contact.phone'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
