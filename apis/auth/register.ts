@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import instance from '../instance';
-import { LoginResponse } from '@/apis/auth/login';
 import { Role } from '@/types/role';
 
 export interface RegisterInput {
@@ -11,16 +10,14 @@ export interface RegisterInput {
   role: Role;
 }
 
+export interface RegisterResponse {}
+
 const URL = '/auth/register';
 
 export const useRegister = () => {
   return useMutation({
     mutationFn: async (input: RegisterInput) => {
-      const response = await instance.post<LoginResponse>(URL, input);
-
-      const { accessToken, refreshToken } = response.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      const response = await instance.post<RegisterResponse>(URL, input);
 
       return response.data;
     },

@@ -7,7 +7,7 @@ const URL = '/users/me';
 
 export const useUserProfile = () => {
   return useQuery({
-    queryKey: [USER_KEYS.userProfile],
+    queryKey: [USER_KEYS.userProfile()],
     queryFn: async () => {
       const response = await instance.get<UserResponse>(URL);
 

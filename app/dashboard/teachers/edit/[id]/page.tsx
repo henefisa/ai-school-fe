@@ -1,6 +1,8 @@
 'use client';
-import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Personal } from '@/components/teachers/create/personal';
 import { Contact } from '@/components/teachers/create/contact';
@@ -12,93 +14,119 @@ import type { z } from 'zod';
 import { Gender } from '@/types/profile';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
-import { formSchema } from './schema';
+import { formSchema } from '@/app/dashboard/teachers/create/schema';
 import { useToast } from '@/hooks/use-toast';
 import { getError } from '@/utils/getError';
-import { useCreateTeacher } from '@/apis/teachers/create';
+import { useGetTeacher } from '@/apis/teachers/get-teacher';
+import { useEditTeacher } from '@/apis/teachers/edit';
 import { EmploymentType } from '@/types/employment-type';
 import { TitleType } from '@/types/title';
+import {
+  defaultValues,
+  TeacherTab,
+} from '@/app/dashboard/teachers/create/page';
+import { TEACHERS_KEYS } from '@/apis/teachers/keys';
 
-export enum TeacherTab {
-  Personal = 'personal',
-  Contact = 'contact',
-  Professional = 'professional',
-  Classes = 'classes',
-}
+export default function EditTeacherPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
 
-export const defaultValues: z.infer<typeof formSchema> = {
-  personal: {
-    title: TitleType.Mr,
-    employeeId: 'EMP2024001',
-    firstName: '',
-    lastName: '',
-    dob: '',
-    gender: Gender.Male,
-    username: '',
-    password: '',
-    photo: undefined,
-  },
-  contact: {
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
-    email: '',
-    phoneNumber: '',
-    emergencyContact: '',
-  },
-  professional: {
-    departmentId: '9dd49ced-98fd-4c2b-9440-63d2b0bf681c',
-    position: 'teacher',
-    joinDate: '',
-    employmentType: EmploymentType.FullTime,
-    qualification: '',
-    experience: '',
-    specialization: '',
-  },
-};
-
-export default function CreateTeacherPage() {
+  const router = useRouter();
   const { toast } = useToast();
-  const createTeacherMutation = useCreateTeacher();
   const [activeTab, setActiveTab] = useState(TeacherTab.Personal);
+
+  const { data: teacher, isLoading } = useGetTeacher(id);
+  const editTeacherMutation = useEditTeacher({
+    queryKey: TEACHERS_KEYS.getTeacher(id),
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
 
+  useEffect(() => {
+    if (teacher) {
+      form.reset({
+        personal: {
+          title: TitleType.Mr,
+          employeeId: 'EMP2024001',
+          firstName: teacher.firstName,
+          lastName: teacher.lastName,
+          dob: teacher.dob,
+          gender: teacher.gender as Gender,
+          username: teacher.user.username,
+          password: '',
+          photo: undefined,
+        },
+        contact: {
+          addressLine1: '',
+          addressLine2: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: '',
+          email: teacher.email,
+          phoneNumber: teacher.contactNumber,
+          emergencyContact: '',
+        },
+        professional: {
+          departmentId: teacher.departmentId,
+          position: '',
+          joinDate: teacher.hireDate,
+          employmentType: EmploymentType.FullTime,
+          qualification: '',
+          experience: '',
+          specialization: '',
+        },
+      });
+    }
+  }, [teacher, form]);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await createTeacherMutation.mutateAsync(values);
-      form.reset(defaultValues);
-      setActiveTab(TeacherTab.Personal);
-      toast({
-        title: 'Teacher Creation Success 🎉',
-        description: 'Teacher has been created successfully!',
+      await editTeacherMutation.mutateAsync({
+        id,
+        input: values,
       });
+
+      toast({
+        title: 'Teacher Updated Successfully 🎉',
+        description: 'Teacher information has been updated.',
+      });
+
+      router.push(`/dashboard/teachers/${id}`);
     } catch (error) {
       toast({
-        title: 'Teacher Creation Failed ❌',
+        title: 'Update Failed ❌',
         description:
-          getError(error) ?? 'Failed to create teacher. Please try again.',
+          getError(error) ?? 'Failed to update teacher. Please try again.',
         variant: 'destructive',
       });
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className='flex h-[50vh] items-center justify-center'>
+        <Loader2 className='h-8 w-8 animate-spin text-primary' />
+      </div>
+    );
+  }
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <Link href='/dashboard/teachers'>
+          <Link href={`/dashboard/teachers/${id}`}>
             <Button variant='outline' size='icon'>
               <ArrowLeft className='h-4 w-4' />
             </Button>
           </Link>
-          <h1 className='text-3xl font-bold tracking-tight'>Add New Teacher</h1>
+          <h1 className='text-3xl font-bold tracking-tight'>Edit Teacher</h1>
         </div>
       </div>
       <Form {...form}>
@@ -118,9 +146,6 @@ export default function CreateTeacherPage() {
               <TabsTrigger value={TeacherTab.Professional}>
                 Professional Information
               </TabsTrigger>
-              {/* <TabsTrigger value={TeacherTab.Classes}>
-                Classes & Schedule
-              </TabsTrigger> */}
             </TabsList>
             <TabsContent value={TeacherTab.Personal} className='space-y-4'>
               <Personal
@@ -150,8 +175,9 @@ export default function CreateTeacherPage() {
             <TabsContent value={TeacherTab.Professional} className='space-y-4'>
               <Professional
                 form={form}
+                isEdit
                 handlePrevious={() => setActiveTab(TeacherTab.Contact)}
-                isSubmitting={createTeacherMutation.isPending}
+                isSubmitting={editTeacherMutation.isPending}
               />
             </TabsContent>
           </Tabs>

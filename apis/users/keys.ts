@@ -1,4 +1,4 @@
 export const USER_KEYS = {
-  users: ['users'],
-  userProfile: 'userProfile',
+  users: () => ['users'],
+  userProfile: () => 'userProfile',
 };

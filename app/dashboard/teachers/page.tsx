@@ -1,11 +1,19 @@
-import { Button } from '@/components/ui/button';
+'use client';
+
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+  PlusCircle,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Loader2,
+  Eye,
+  Trash,
+  Download,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -15,295 +23,336 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Download,
-  Filter,
-  PlusCircle,
-  Search,
-  SlidersHorizontal,
-} from 'lucide-react';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { TEACHERS_KEYS } from '@/apis/teachers/keys';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { StudentStatusFilter as TeacherStatusFilter } from '@/apis/students/list-students';
+import { useDeleteTeacher } from '@/apis/teachers/delete';
+import { TeacherResponse } from '@/apis/teachers/type';
+import { getDisplayName } from '@/utils/get-display-name';
+import { useListTeachers } from '@/apis/teachers/list-teachers';
+import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { getError } from '@/utils/getError';
 
 export default function TeachersPage() {
-  // Sample teacher data
-  const teachers = [
-    {
-      id: 1,
-      name: 'Dr. Robert Chen',
-      department: 'Mathematics',
-      qualification: 'Ph.D',
-      experience: '15 years',
-      classes: '4',
-      status: 'Active',
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      department: 'English',
-      qualification: 'M.A.',
-      experience: '8 years',
-      classes: '5',
-      status: 'Active',
-    },
-    {
-      id: 3,
-      name: 'Michael Williams',
-      department: 'Science',
-      qualification: 'Ph.D',
-      experience: '12 years',
-      classes: '3',
-      status: 'Active',
-    },
-    {
-      id: 4,
-      name: 'Emily Davis',
-      department: 'History',
-      qualification: 'M.A.',
-      experience: '6 years',
-      classes: '4',
-      status: 'Active',
-    },
-    {
-      id: 5,
-      name: 'James Wilson',
-      department: 'Physical Education',
-      qualification: 'B.Ed',
-      experience: '10 years',
-      classes: '6',
-      status: 'On Leave',
-    },
-    {
-      id: 6,
-      name: 'Jennifer Taylor',
-      department: 'Art',
-      qualification: 'M.F.A.',
-      experience: '7 years',
-      classes: '5',
-      status: 'Active',
-    },
-    {
-      id: 7,
-      name: 'David Martinez',
-      department: 'Computer Science',
-      qualification: 'M.S.',
-      experience: '9 years',
-      classes: '3',
-      status: 'Active',
-    },
-    {
-      id: 8,
-      name: 'Lisa Anderson',
-      department: 'Music',
-      qualification: 'M.Mus.',
-      experience: '11 years',
-      classes: '4',
-      status: 'Active',
-    },
-    {
-      id: 9,
-      name: 'Thomas Brown',
-      department: 'Geography',
-      qualification: 'Ph.D',
-      experience: '14 years',
-      classes: '3',
-      status: 'On Leave',
-    },
-    {
-      id: 10,
-      name: 'Patricia Miller',
-      department: 'Chemistry',
-      qualification: 'Ph.D',
-      experience: '13 years',
-      classes: '4',
-      status: 'Active',
-    },
-  ];
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>(
+    TeacherStatusFilter.ALL
+  );
+  const pageSize = 10;
+
+  const getStatusBoolean = () => {
+    if (statusFilter === TeacherStatusFilter.ACTIVE) return true;
+    if (statusFilter === TeacherStatusFilter.INACTIVE) return false;
+    return undefined;
+  };
+
+  const [selectedTeacher, setSelectedTeacher] = useState<TeacherResponse>();
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const { data, isLoading } = useListTeachers({
+    page: currentPage,
+    pageSize,
+    q: searchQuery,
+    status: getStatusBoolean(),
+  });
+
+  const deleteTeacherMutation = useDeleteTeacher({
+    queryKey: TEACHERS_KEYS.listTeachers({
+      page: currentPage,
+      pageSize,
+      q: searchQuery,
+    }),
+  });
+
+  const totalPages = useMemo(
+    () => Math.ceil((data?.count || 0) / pageSize),
+    [data]
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedTeacher?.id) return;
+    try {
+      await deleteTeacherMutation.mutateAsync(selectedTeacher.id);
+      setShowConfirmDelete(false);
+      setSelectedTeacher({} as TeacherResponse);
+
+      toast({
+        title: 'Teacher Deleted',
+        description: 'Teacher has been deleted successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Delete failed teacher!',
+        description:
+          getError(error) ?? 'Failed to delete teacher. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteClick = (teacher: TeacherResponse) => {
+    setSelectedTeacher(teacher);
+    setShowConfirmDelete(true);
+  };
 
   return (
     <div className='space-y-6'>
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Teachers</h1>
-          <p className='text-muted-foreground'>
-            Manage teacher information, assignments, and performance.
-          </p>
-        </div>
-        <Button className='sm:w-auto'>
-          <PlusCircle className='mr-2 h-4 w-4' />
-          Add Teacher
-        </Button>
+      <div className='flex items-center justify-between'>
+        <h1 className='text-3xl font-bold tracking-tight'>Teachers</h1>
+        <Link href='/dashboard/teachers/create'>
+          <Button>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Add New Teacher
+          </Button>
+        </Link>
       </div>
 
-      <Tabs defaultValue='all'>
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between'>
-          <TabsList>
-            <TabsTrigger value='all'>All Teachers</TabsTrigger>
-            <TabsTrigger value='active'>Active</TabsTrigger>
-            <TabsTrigger value='on-leave'>On Leave</TabsTrigger>
-          </TabsList>
-          <div className='mt-4 flex items-center gap-2 sm:mt-0'>
-            <div className='relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                type='search'
-                placeholder='Search teachers...'
-                className='w-full rounded-md pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]'
-              />
+      <Card>
+        <CardHeader className='pb-3'>
+          <CardTitle>All Teachers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+            <div className='space-y-2'>
+              <label htmlFor='search' className='text-sm font-medium'>
+                Search Teachers
+              </label>
+              <div className='relative'>
+                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                <Input
+                  id='search'
+                  type='search'
+                  placeholder='Search by name...'
+                  className='pl-8'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-            <Button variant='outline' size='icon'>
-              <Filter className='h-4 w-4' />
-              <span className='sr-only'>Filter</span>
-            </Button>
-            <Button variant='outline' size='icon'>
-              <SlidersHorizontal className='h-4 w-4' />
-              <span className='sr-only'>Settings</span>
-            </Button>
+            <div className='space-y-2'>
+              <label htmlFor='status' className='text-sm font-medium'>
+                Status
+              </label>
+              <Select
+                value={statusFilter}
+                onValueChange={(value: TeacherStatusFilter) =>
+                  setStatusFilter(value)
+                }
+              >
+                <SelectTrigger id='status'>
+                  <SelectValue placeholder='Select status' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TeacherStatusFilter.ALL}>
+                    All Teachers
+                  </SelectItem>
+                  <SelectItem value={TeacherStatusFilter.ACTIVE}>
+                    Active
+                  </SelectItem>
+                  <SelectItem value={TeacherStatusFilter.INACTIVE}>
+                    Inactive
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-        <TabsContent value='all' className='space-y-4'>
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between'>
-              <CardTitle>All Teachers</CardTitle>
-              <Button variant='outline' size='sm'>
-                <Download className='mr-2 h-4 w-4' />
-                Export
-              </Button>
-            </CardHeader>
-            <CardContent>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <CardTitle>Teachers List</CardTitle>
+          <Button variant='outline' size='sm'>
+            <Download className='mr-2 h-4 w-4' />
+            Export
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className='flex h-[300px] items-center justify-center'>
+              <Loader2 className='h-8 w-8 animate-spin text-primary' />
+            </div>
+          ) : (
+            <>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Teacher</TableHead>
                     <TableHead>Department</TableHead>
-                    <TableHead>Qualification</TableHead>
-                    <TableHead>Experience</TableHead>
-                    <TableHead>Classes</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Hire Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {teachers.map((teacher) => (
-                    <TableRow key={teacher.id}>
-                      <TableCell className='font-medium'>
-                        {teacher.name}
-                      </TableCell>
-                      <TableCell>{teacher.department}</TableCell>
-                      <TableCell>{teacher.qualification}</TableCell>
-                      <TableCell>{teacher.experience}</TableCell>
-                      <TableCell>{teacher.classes}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            teacher.status === 'Active'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {teacher.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <Button variant='ghost' size='sm'>
-                          View
-                        </Button>
+                  {data?.results.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className='h-24 text-center'>
+                        No teachers found.
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value='active' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Teachers</CardTitle>
-              <CardDescription>
-                Teachers who are currently teaching and active in the school.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Qualification</TableHead>
-                    <TableHead>Experience</TableHead>
-                    <TableHead>Classes</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teachers
-                    .filter((teacher) => teacher.status === 'Active')
-                    .map((teacher) => (
+                  ) : (
+                    data?.results.map((teacher) => (
                       <TableRow key={teacher.id}>
-                        <TableCell className='font-medium'>
-                          {teacher.name}
+                        <TableCell>
+                          <div className='flex items-center gap-3'>
+                            <Avatar>
+                              <AvatarImage
+                                src={`/placeholder.svg?height=40&width=40`}
+                                alt={getDisplayName(teacher)}
+                              />
+                              <AvatarFallback>
+                                {getDisplayName(teacher)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <p className='font-medium'>
+                              {getDisplayName(teacher)}
+                            </p>
+                          </div>
                         </TableCell>
-                        <TableCell>{teacher.department}</TableCell>
-                        <TableCell>{teacher.qualification}</TableCell>
-                        <TableCell>{teacher.experience}</TableCell>
-                        <TableCell>{teacher.classes}</TableCell>
-                        <TableCell className='text-right'>
-                          <Button variant='ghost' size='sm'>
-                            View
+                        <TableCell>{teacher.departmentId}</TableCell>
+                        <TableCell>{teacher.email}</TableCell>
+                        <TableCell>
+                          {format(new Date(teacher.hireDate), 'dd/MM/yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              teacher.deletedAt ? 'destructive' : 'default'
+                            }
+                          >
+                            {teacher.deletedAt ? 'Inactive' : 'Active'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className='text-right flex gap-2 justify-end'>
+                          <Link href={`teachers/${teacher.id}`}>
+                            <Button variant='default' size='sm'>
+                              <Eye />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant='destructive'
+                            size='sm'
+                            onClick={() => handleDeleteClick(teacher)}
+                          >
+                            <Trash />
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ))
+                  )}
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value='on-leave' className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Teachers On Leave</CardTitle>
-              <CardDescription>
-                Teachers who are currently on leave or sabbatical.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Qualification</TableHead>
-                    <TableHead>Experience</TableHead>
-                    <TableHead>Classes</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teachers
-                    .filter((teacher) => teacher.status === 'On Leave')
-                    .map((teacher) => (
-                      <TableRow key={teacher.id}>
-                        <TableCell className='font-medium'>
-                          {teacher.name}
-                        </TableCell>
-                        <TableCell>{teacher.department}</TableCell>
-                        <TableCell>{teacher.qualification}</TableCell>
-                        <TableCell>{teacher.experience}</TableCell>
-                        <TableCell>{teacher.classes}</TableCell>
-                        <TableCell className='text-right'>
-                          <Button variant='ghost' size='sm'>
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              {data && data.count > 0 && (
+                <div className='mt-4 flex justify-center'>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            handlePageChange(Math.max(1, currentPage - 1))
+                          }
+                          className={
+                            currentPage === 1
+                              ? 'pointer-events-none opacity-50'
+                              : 'cursor-pointer'
+                          }
+                        />
+                      </PaginationItem>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            handlePageChange(
+                              Math.min(totalPages, currentPage + 1)
+                            )
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+        <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm deletion</DialogTitle>
+              {selectedTeacher && (
+                <DialogDescription>
+                  Are you sure you want to delete{' '}
+                  <b>{getDisplayName(selectedTeacher)}</b> teacher? This action
+                  cannot be undone.
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setShowConfirmDelete(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant='destructive' onClick={handleConfirmDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </Card>
     </div>
   );
 }
