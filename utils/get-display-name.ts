@@ -1,11 +1,10 @@
-import { Tables } from './supabase/database.types';
-
-export const getDisplayName = (
-  profile: Tables<'profiles'> | null | undefined
-) => {
+export const getDisplayName = (profile: {
+  firstName: string;
+  lastName: string;
+}) => {
   if (!profile) {
     return '';
   }
 
-  return `${profile.first_name} ${profile.last_name}`;
+  return `${profile.firstName} ${profile.lastName}`;
 };

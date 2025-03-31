@@ -1,8 +1,30 @@
 'use client';
 
+import { useDeleteStudent } from '@/apis/students/delete';
+import { STUDENTS_KEYS } from '@/apis/students/keys';
+import {
+  StudentStatusFilter,
+  useListStudents,
+} from '@/apis/students/list-students';
+import { FilterStudent, StudentInfo } from '@/apis/students/type';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -20,27 +42,70 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import useDebounce from '@/hooks/use-debounce';
-import {
-  getStudents,
-  StudentStatusFilter,
-} from '@/queries/student/get-students';
+import { useToast } from '@/hooks/use-toast';
+
 import { getDisplayName } from '@/utils/get-display-name';
-import { createClient } from '@/utils/supabase/client';
-import { useQuery } from '@supabase-cache-helpers/postgrest-react-query';
-import { Download, PlusCircle, Search } from 'lucide-react';
+import { getError } from '@/utils/getError';
+import { Download, Eye, PlusCircle, Search, Trash } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export default function StudentsPage() {
-  const supabase = createClient();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>(
     StudentStatusFilter.ALL
   );
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const { data, isLoading } = useQuery(
-    getStudents(supabase, { status: statusFilter, q: debouncedSearchQuery })
-  );
+  const [page, setPage] = useState(1);
+
+  const filter: FilterStudent = {
+    page,
+    pageSize: 10,
+    q: debouncedSearchQuery,
+    status:
+      statusFilter === 'all'
+        ? undefined
+        : statusFilter === 'active'
+        ? true
+        : false,
+  };
+
+  const deleteStudentMutation = useDeleteStudent({
+    queryKey: STUDENTS_KEYS.listStudents(filter),
+  });
+
+  const { data, isLoading } = useListStudents(filter);
+  const [selectedStudent, setSelectedStudent] = useState<StudentInfo>();
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const totalPages = useMemo(() => Math.ceil((data?.count || 0) / 10), [data]);
+
+  const handleDeleteClick = (student: StudentInfo) => {
+    setSelectedStudent(student);
+    setShowConfirmDelete(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedStudent?.id) return;
+    try {
+      await deleteStudentMutation.mutateAsync(selectedStudent.id);
+      setShowConfirmDelete(false);
+      setSelectedStudent({} as StudentInfo);
+
+      toast({
+        title: 'Student deleted successfully!',
+        description: 'The student has been removed from the system.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Delete failed students!',
+        description:
+          getError(error) ??
+          'An error occurred during deletion. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   return (
     <div className='space-y-6'>
@@ -51,10 +116,12 @@ export default function StudentsPage() {
             Manage student information, records, and performance.
           </p>
         </div>
-        <Button className='sm:w-auto'>
-          <PlusCircle className='mr-2 h-4 w-4' />
-          Add Student
-        </Button>
+        <Link href='students/create'>
+          <Button className='sm:w-auto'>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Add Student
+          </Button>
+        </Link>
       </div>
       <Card>
         <CardHeader className='pb-3'>
@@ -107,7 +174,6 @@ export default function StudentsPage() {
           </div>
         </CardContent>
       </Card>
-
       <Card>
         <CardHeader className='flex flex-row items-center justify-between'>
           <CardTitle>Students List</CardTitle>
@@ -156,36 +222,40 @@ export default function StudentsPage() {
                     </TableCell>
                   </TableRow>
                 ))
-              ) : data?.length ? (
-                data?.map((student) => (
+              ) : data?.results.length ? (
+                data.results.map((student) => (
                   <TableRow key={student.id}>
                     <TableCell className='font-medium'>
-                      {getDisplayName(student.profiles)}
+                      {getDisplayName(student)}
                     </TableCell>
-                    {/* <TableCell>{student.grade}</TableCell> */}
-                    <TableCell>12B1</TableCell>
-                    <TableCell>{student.profiles?.gender}</TableCell>
+                    <TableCell>{student.grade}</TableCell>
+                    <TableCell>{student.gender}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          student.status
+                          student.id
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {student.status ? 'Active' : 'Inactive'}
+                        {student.id ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
-                    {/* <TableCell>{student.attendance}</TableCell> */}
                     <TableCell>95%</TableCell>
-                    {/* <TableCell>{student.avgGrade}</TableCell> */}
                     <TableCell>A</TableCell>
-                    <TableCell className='text-right'>
+                    <TableCell className='text-right flex gap-2 justify-end'>
                       <Link href={`students/${student.id}`}>
-                        <Button variant='ghost' size='sm'>
-                          View
+                        <Button variant='default' size='sm'>
+                          <Eye />
                         </Button>
                       </Link>
+                      <Button
+                        variant='destructive'
+                        size='sm'
+                        onClick={() => handleDeleteClick(student)}
+                      >
+                        <Trash />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -198,7 +268,64 @@ export default function StudentsPage() {
               )}
             </TableBody>
           </Table>
+          {data && data?.count > 0 && (
+            <Pagination className='mt-4'>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <PaginationItem key={index}>
+                    <button
+                      className={`px-3 py-1 rounded-md ${
+                        page === index + 1
+                          ? 'bg-gray-200 font-bold'
+                          : 'bg-white'
+                      }`}
+                      onClick={() => setPage(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
+        <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm deletion</DialogTitle>
+              {selectedStudent && (
+                <DialogDescription>
+                  Are you sure you want to delete{' '}
+                  <b>{getDisplayName(selectedStudent)}</b> student? This action
+                  cannot be undone.
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setShowConfirmDelete(false)}
+              >
+                Cancel
+              </Button>
+              <Button variant='destructive' onClick={handleConfirmDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
     </div>
   );

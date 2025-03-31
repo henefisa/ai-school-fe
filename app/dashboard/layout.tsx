@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { RoleSwitcher } from '@/components/role-switcher';
 import { Profile } from '@/components/header/profile';
 import { useStoreContext } from '@/contexts/store';
+import { Role } from '@/types/role';
 
 export default function DashboardLayout({
   children,
@@ -33,7 +34,7 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='w-72 p-0'>
-                <DashboardSidebar role={role} />
+                <DashboardSidebar role={Role.Admin} />
               </SheetContent>
             </Sheet>
             <span className='text-lg font-bold'>EduManage</span>
@@ -53,7 +54,7 @@ export default function DashboardLayout({
       </header>
       <div className='flex flex-1'>
         <aside className='hidden w-64 border-r md:block'>
-          <DashboardSidebar role={role} />
+          <DashboardSidebar role={Role.Admin} />
         </aside>
         <main className='flex-1 overflow-auto p-4 md:p-6'>{children}</main>
       </div>

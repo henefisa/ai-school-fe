@@ -12,15 +12,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useRole } from '@/hooks/use-role';
 import { useToast } from '@/hooks/use-toast';
-import { Role } from '@/zustand/slices/user-role';
+import { Role } from '@/types/role';
 import { LightbulbIcon as SwitchIcon } from 'lucide-react';
 
 const options: { label: string; value: Role }[] = [
-  { label: 'Admin', value: 'ADMIN' },
-  { label: 'Teacher', value: 'TEACHER' },
-  { label: 'Student', value: 'STUDENT' },
-  { label: 'Parent', value: 'PARENT' },
-  { label: 'Staff', value: 'STAFF' },
+  { label: 'Admin', value: Role.Admin },
+  { label: 'Teacher', value: Role.Teacher },
+  { label: 'Student', value: Role.Student },
+  { label: 'Parent', value: Role.Parent },
 ];
 
 export function RoleSwitcher() {
