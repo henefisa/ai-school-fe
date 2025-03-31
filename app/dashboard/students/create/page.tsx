@@ -17,8 +17,8 @@ import { Form } from '@/components/ui/form';
 import { formSchema } from './schema';
 import { customAlphabet } from 'nanoid';
 import { useToast } from '@/hooks/use-toast';
-import { useCreateStudent } from '@/apis/students';
 import { getError } from '@/utils/getError';
+import { useCreateStudent } from '@/apis/students';
 
 export enum StudentTab {
   Personal = 'personal',
