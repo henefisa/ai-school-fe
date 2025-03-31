@@ -22,9 +22,7 @@ import {
   BellIcon,
   LucideIcon,
 } from 'lucide-react';
-import { Tables } from '@/utils/supabase/database.types';
-
-type Role = Tables<'user_roles'>['role'];
+import { Role } from '@/types/role';
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
   role: Role;
@@ -188,7 +186,6 @@ export function DashboardSidebar({
           icon: BellIcon,
         },
       ],
-      STAFF: [],
     };
 
     const settingsItem: NavItem[] = [

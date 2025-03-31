@@ -1,12 +1,11 @@
 'use client';
 
 import type React from 'react';
-import { startTransition, useActionState, useRef, useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Academic } from '@/components/students/create/academic';
 import { Contact } from '@/components/students/create/contact';
-import { Parent } from '@/components/students/create/parent';
 import { Personal } from '@/components/students/create/personal';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,9 +14,11 @@ import { z } from 'zod';
 import { Gender } from '@/types/profile';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
-import { onSubmitAction } from './actions';
 import { formSchema } from './schema';
-import { flattenObjectToFormData } from '@/utils/flatten-object-to-form-data';
+import { customAlphabet } from 'nanoid';
+import { useToast } from '@/hooks/use-toast';
+import { useCreateStudent } from '@/apis/students';
+import { getError } from '@/utils/getError';
 
 export enum StudentTab {
   Personal = 'personal',
@@ -26,57 +27,77 @@ export enum StudentTab {
   Parent = 'parent',
 }
 
+const nanoid = customAlphabet('1234567890', 10);
+
+const defaultValues = {
+  personal: {
+    firstName: '',
+    lastName: '',
+    dob: '',
+    gender: Gender.Male,
+    studentId: '',
+    password: '',
+    username: '',
+    photo: undefined,
+  },
+  contact: {
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: '',
+    email: '',
+    phone: '',
+  },
+  academic: {
+    grade: '',
+    enrollmentDate: '',
+    previousSchool: '',
+    academicYear: '',
+    additionalNotes: '',
+  },
+  parent: {
+    parentId: 'af8b67e1-2652-476a-af63-bbc9703a902a',
+  },
+};
+
 export default function CreateStudentPage() {
-  const [state, formAction] = useActionState(onSubmitAction, {
-    isSuccess: false,
-    message: '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const createStudentMutation = useCreateStudent();
   const [activeTab, setActiveTab] = useState(StudentTab.Personal);
-  const formRef = useRef<HTMLFormElement | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      personal: {
-        firstName: '',
-        lastName: '',
-        dob: '',
-        photo: undefined,
-        gender: Gender.Male,
-        studentId: '',
-      },
-      contact: {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: '',
-        email: '',
-        phone: '',
-      },
-      academic: {
-        grade: '',
-        enrollmentDate: '',
-        previousSchool: '',
-        academicYear: '',
-        additionalNotes: '',
-      },
-      parent: {
-        name: '',
-        relationship: '',
-        email: '',
-        phoneNumber: '',
-        address: '',
-        emergencyContact: '',
-      },
-    },
+    defaultValues,
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    startTransition(() => {
-      formAction(flattenObjectToFormData(values));
-    });
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const studentId = `${nanoid()}@domain.example.com`;
+
+    const formattedValues = {
+      ...values,
+      personal: {
+        ...values.personal,
+        studentId,
+      },
+    };
+
+    try {
+      await createStudentMutation.mutateAsync(formattedValues);
+      form.reset(defaultValues);
+      setActiveTab(StudentTab.Personal);
+      toast({
+        title: 'Student Creation Success 🎉',
+        description: 'Student has been created successfully!',
+      });
+    } catch (error) {
+      toast({
+        title: 'Student Creation Failed ❌',
+        description:
+          getError(error) ?? 'Failed to create student. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -92,7 +113,7 @@ export default function CreateStudentPage() {
         </div>
       </div>
       <Form {...form}>
-        <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs
             value={activeTab}
             onValueChange={(tab) => setActiveTab(tab as StudentTab)}
@@ -108,9 +129,9 @@ export default function CreateStudentPage() {
               <TabsTrigger value={StudentTab.Academic}>
                 Academic Information
               </TabsTrigger>
-              <TabsTrigger value={StudentTab.Parent}>
+              {/* <TabsTrigger value={StudentTab.Parent}>
                 Parent/Guardian
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
             <TabsContent value={StudentTab.Personal} className='space-y-4'>
               <Personal
@@ -140,22 +161,22 @@ export default function CreateStudentPage() {
             <TabsContent value={StudentTab.Academic} className='space-y-4'>
               <Academic
                 form={form}
-                handleNext={async () => {
-                  const isValid = await form.trigger('academic');
+                // handleNext={async () => {
+                //   const isValid = await form.trigger('academic');
 
-                  if (isValid) {
-                    setActiveTab(StudentTab.Parent);
-                  }
-                }}
+                //   if (isValid) {
+                //     setActiveTab(StudentTab.Parent);
+                //   }
+                // }}
                 handlePrevious={() => setActiveTab(StudentTab.Contact)}
               />
             </TabsContent>
-            <TabsContent value={StudentTab.Parent} className='space-y-4'>
+            {/* <TabsContent value={StudentTab.Parent} className='space-y-4'>
               <Parent
                 form={form}
                 handlePrevious={() => setActiveTab(StudentTab.Academic)}
               />
-            </TabsContent>
+            </TabsContent> */}
           </Tabs>
         </form>
       </Form>

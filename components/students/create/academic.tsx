@@ -30,7 +30,7 @@ import { z } from 'zod';
 
 interface AcademicProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  handleNext: () => void;
+  handleNext?: () => void;
   handlePrevious: () => void;
 }
 
@@ -148,9 +148,7 @@ export const Academic: React.FC<AcademicProps> = ({
         <Button variant='outline' type='button' onClick={handlePrevious}>
           Previous
         </Button>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
+        <Button type='submit'>Create Student</Button>
       </CardFooter>
     </Card>
   );

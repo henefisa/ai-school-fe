@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Gender } from '@/types/profile';
+import { nanoid } from 'nanoid';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -63,6 +64,47 @@ export const Personal: React.FC<PersonalProps> = ({ form, handleNext }) => {
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
                   <Input type='text' placeholder='Enter last name' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='personal.username'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input type='text' placeholder='Enter username' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='personal.password'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <div className='flex gap-2'>
+                    <Input
+                      type='text'
+                      placeholder='Enter password'
+                      disabled
+                      {...field}
+                    />
+                    <Button
+                      type='button'
+                      onClick={() => field.onChange(nanoid(12))}
+                    >
+                      Generate
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
