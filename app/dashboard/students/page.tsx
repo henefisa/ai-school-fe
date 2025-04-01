@@ -22,6 +22,7 @@ import {
   Pagination,
   PaginationContent,
   PaginationItem,
+  PaginationLink,
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
@@ -52,29 +53,32 @@ import { useMemo, useState } from 'react';
 
 export default function StudentsPage() {
   const { toast } = useToast();
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>(
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>(
     StudentStatusFilter.ALL
   );
+  const pageSize = 10;
+
+  const getStatusBoolean = () => {
+    if (statusFilter === StudentStatusFilter.ACTIVE) return true;
+    if (statusFilter === StudentStatusFilter.INACTIVE) return false;
+    return undefined;
+  };
+
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [page, setPage] = useState(1);
 
   const filter: FilterStudent = {
-    page,
-    pageSize: 10,
+    page: currentPage,
+    pageSize,
     q: debouncedSearchQuery,
-    status:
-      statusFilter === 'all'
-        ? undefined
-        : statusFilter === 'active'
-        ? true
-        : false,
+    status: getStatusBoolean(),
   };
 
   const deleteStudentMutation = useDeleteStudent({
     queryKey: STUDENTS_KEYS.listStudents(filter),
   });
-
   const { data, isLoading } = useListStudents(filter);
   const [selectedStudent, setSelectedStudent] = useState<StudentInfo>();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -83,6 +87,10 @@ export default function StudentsPage() {
   const handleDeleteClick = (student: StudentInfo) => {
     setSelectedStudent(student);
     setShowConfirmDelete(true);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const handleConfirmDelete = async () => {
@@ -268,37 +276,49 @@ export default function StudentsPage() {
               )}
             </TableBody>
           </Table>
-          {data && data?.count > 0 && (
-            <Pagination className='mt-4'>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                  />
-                </PaginationItem>
-                {Array.from({ length: totalPages }).map((_, index) => (
-                  <PaginationItem key={index}>
-                    <button
-                      className={`px-3 py-1 rounded-md ${
-                        page === index + 1
-                          ? 'bg-gray-200 font-bold'
-                          : 'bg-white'
-                      }`}
-                      onClick={() => setPage(index + 1)}
-                    >
-                      {index + 1}
-                    </button>
+          {data && data.count > 0 && (
+            <div className='mt-4 flex justify-center'>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() =>
+                        handlePageChange(Math.max(1, currentPage - 1))
+                      }
+                      className={
+                        currentPage === 1
+                          ? 'pointer-events-none opacity-50'
+                          : 'cursor-pointer'
+                      }
+                    />
                   </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() =>
-                      setPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(page)}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() =>
+                        handlePageChange(Math.min(totalPages, currentPage + 1))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? 'pointer-events-none opacity-50'
+                          : 'cursor-pointer'
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </CardContent>
         <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>

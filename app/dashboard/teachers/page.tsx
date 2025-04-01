@@ -64,6 +64,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getError } from '@/utils/getError';
+import useDebounce from '@/hooks/use-debounce';
 
 export default function TeachersPage() {
   const { toast } = useToast();
@@ -83,10 +84,12 @@ export default function TeachersPage() {
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherResponse>();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   const { data, isLoading } = useListTeachers({
     page: currentPage,
     pageSize,
-    q: searchQuery,
+    q: debouncedSearchQuery,
     status: getStatusBoolean(),
   });
 
@@ -94,7 +97,7 @@ export default function TeachersPage() {
     queryKey: TEACHERS_KEYS.listTeachers({
       page: currentPage,
       pageSize,
-      q: searchQuery,
+      q: debouncedSearchQuery,
     }),
   });
 
@@ -147,7 +150,7 @@ export default function TeachersPage() {
 
       <Card>
         <CardHeader className='pb-3'>
-          <CardTitle>All Teachers</CardTitle>
+          <CardTitle>Teacher Filters</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
@@ -297,7 +300,6 @@ export default function TeachersPage() {
                           }
                         />
                       </PaginationItem>
-
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                         (page) => (
                           <PaginationItem key={page}>
@@ -310,13 +312,17 @@ export default function TeachersPage() {
                           </PaginationItem>
                         )
                       )}
-
                       <PaginationItem>
                         <PaginationNext
                           onClick={() =>
                             handlePageChange(
                               Math.min(totalPages, currentPage + 1)
                             )
+                          }
+                          className={
+                            currentPage === totalPages
+                              ? 'pointer-events-none opacity-50'
+                              : 'cursor-pointer'
                           }
                         />
                       </PaginationItem>

@@ -6,6 +6,7 @@ export interface UserPayload {
   role: Role;
   teacherId: string | null;
   studentId: string | null;
+  parentId: string | null;
   isActive: boolean;
   photoUrl: string | null;
 }
