@@ -21,6 +21,7 @@ import {
   ClipboardCheckIcon,
   BellIcon,
   LucideIcon,
+  CircleUser,
 } from 'lucide-react';
 import { Role } from '@/types/role';
 
@@ -68,6 +69,11 @@ export function DashboardSidebar({
           name: 'Students',
           href: '/dashboard/students',
           icon: GraduationCapIcon,
+        },
+        {
+          name: 'Parents',
+          href: '/dashboard/parents',
+          icon: CircleUser,
         },
         {
           name: 'Teachers',

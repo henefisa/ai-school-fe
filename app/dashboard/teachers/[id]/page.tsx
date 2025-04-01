@@ -230,9 +230,9 @@ export default function TeacherDetailPage({
                   <p className='text-muted-foreground'>{data.departmentId}</p>
                   <Badge
                     className='mt-2'
-                    variant={data.deletedAt ? 'default' : 'destructive'}
+                    variant={data.deletedAt ? 'destructive' : 'default'}
                   >
-                    {data.deletedAt ? 'Active' : 'Inactive'}
+                    {data.deletedAt ? 'Inactive' : 'Active'}
                   </Badge>
                 </div>
               </div>

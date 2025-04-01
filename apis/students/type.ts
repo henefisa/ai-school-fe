@@ -46,6 +46,5 @@ export interface EditStudentParams {
 }
 
 export interface StudentInfo extends StudentResponse {
-  studentAddresses: AddressResponse;
   user: UserResponse;
 }
