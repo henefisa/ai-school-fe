@@ -26,6 +26,7 @@ import {
   TeacherTab,
 } from '@/app/dashboard/teachers/create/page';
 import { TEACHERS_KEYS } from '@/apis/teachers/keys';
+import { useListDepartments } from '@/apis/departments/list-departments';
 
 export default function EditTeacherPage({
   params,
@@ -41,6 +42,13 @@ export default function EditTeacherPage({
   const { data: teacher, isLoading } = useGetTeacher(id);
   const editTeacherMutation = useEditTeacher({
     queryKey: TEACHERS_KEYS.getTeacher(id),
+  });
+
+  const { data: listDepartments } = useListDepartments({
+    page: 1,
+    pageSize: 50,
+    q: '',
+    status: true,
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -63,8 +71,7 @@ export default function EditTeacherPage({
           photo: undefined,
         },
         contact: {
-          addressLine1: '',
-          addressLine2: '',
+          street: '',
           city: '',
           state: '',
           zipCode: '',
@@ -178,6 +185,7 @@ export default function EditTeacherPage({
                 isEdit
                 handlePrevious={() => setActiveTab(TeacherTab.Contact)}
                 isSubmitting={editTeacherMutation.isPending}
+                listDepartments={listDepartments?.results ?? []}
               />
             </TabsContent>
           </Tabs>

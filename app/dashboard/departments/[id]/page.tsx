@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,6 +12,7 @@ import {
   FileEdit,
   Trash2,
   User,
+  Loader2,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,97 +35,82 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/components/ui/use-toast';
-
-// Sample department data (in a real app, this would be fetched from an API)
-const getDepartmentData = (id: string) => {
-  const departments = [
-    {
-      id: '1',
-      name: 'Mathematics',
-      description: 'Mathematics and Statistics Department',
-      head: 'Dr. John Smith',
-      email: 'math@school.edu',
-      phone: '(555) 123-4567',
-      location: 'Building A, Room 101',
-      createdAt: '2023-01-15',
-      faculty: [
-        {
-          id: '1',
-          name: 'Dr. John Smith',
-          position: 'Department Head',
-          email: 'jsmith@school.edu',
-        },
-        {
-          id: '2',
-          name: 'Dr. Lisa Johnson',
-          position: 'Professor',
-          email: 'ljohnson@school.edu',
-        },
-        {
-          id: '3',
-          name: 'Mr. Robert Davis',
-          position: 'Assistant Professor',
-          email: 'rdavis@school.edu',
-        },
-      ],
-      courses: [
-        { id: '1', code: 'MATH101', name: 'Introduction to Calculus' },
-        { id: '2', code: 'MATH201', name: 'Advanced Calculus' },
-        { id: '3', code: 'MATH301', name: 'Linear Algebra' },
-        { id: '4', code: 'STAT101', name: 'Introduction to Statistics' },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Science',
-      description: 'Natural Sciences Department',
-      head: 'Dr. Emily Johnson',
-      email: 'science@school.edu',
-      phone: '(555) 123-4568',
-      location: 'Building B, Room 205',
-      createdAt: '2023-01-20',
-      faculty: [
-        {
-          id: '4',
-          name: 'Dr. Emily Johnson',
-          position: 'Department Head',
-          email: 'ejohnson@school.edu',
-        },
-        {
-          id: '5',
-          name: 'Dr. Michael Brown',
-          position: 'Professor',
-          email: 'mbrown@school.edu',
-        },
-        {
-          id: '6',
-          name: 'Ms. Sarah Wilson',
-          position: 'Lab Coordinator',
-          email: 'swilson@school.edu',
-        },
-      ],
-      courses: [
-        { id: '5', code: 'BIO101', name: 'Introduction to Biology' },
-        { id: '6', code: 'CHEM101', name: 'General Chemistry' },
-        { id: '7', code: 'PHYS101', name: 'Physics I' },
-      ],
-    },
-  ];
-
-  return departments.find((dept) => dept.id === id) || null;
-};
+import { useToast } from '@/hooks/use-toast';
+import DepartmentDetailLoading from '../loading';
+import { useGetDepartment } from '@/apis/departments/get-department';
+import { useDeleteDepartment } from '@/apis/departments/delete';
+import { formatDate } from 'date-fns';
 
 export default function DepartmentDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const router = useRouter();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { id } = use(params);
 
-  // Fetch department data
-  const department = getDepartmentData(params.id);
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { data: department, isLoading } = useGetDepartment(id);
+  const deleteDepartmentMutation = useDeleteDepartment();
+
+  const faculty = [
+    {
+      id: '1',
+      name: 'Dr. John Smith',
+      position: 'Department Head',
+      email: 'jsmith@school.edu',
+    },
+    {
+      id: '2',
+      name: 'Dr. Lisa Johnson',
+      position: 'Professor',
+      email: 'ljohnson@school.edu',
+    },
+    {
+      id: '3',
+      name: 'Mr. Robert Davis',
+      position: 'Assistant Professor',
+      email: 'rdavis@school.edu',
+    },
+  ];
+
+  const courses = [
+    { id: '1', code: 'CS101', name: 'Introduction to Computer Science' },
+    { id: '2', code: 'CS201', name: 'Data Structures' },
+    { id: '3', code: 'CS301', name: 'Algorithms' },
+    { id: '4', code: 'CS401', name: 'Database Systems' },
+  ];
+
+  // Handle department deletion
+  const handleDeleteDepartment = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteDepartmentMutation.mutateAsync(id);
+
+      toast({
+        title: 'Department deleted',
+        description: `${department?.name} has been deleted successfully.`,
+      });
+
+      setIsDeleteDialogOpen(false);
+      router.push('/dashboard/departments');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete department. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (isLoading) {
+    return <DepartmentDetailLoading />;
+  }
 
   if (!department) {
     return (
@@ -144,17 +130,6 @@ export default function DepartmentDetailPage({
     );
   }
 
-  // Handle department deletion
-  const handleDeleteDepartment = () => {
-    // In a real application, you would call an API to delete the department
-    toast({
-      title: 'Department deleted',
-      description: `${department.name} has been deleted successfully.`,
-    });
-    setIsDeleteDialogOpen(false);
-    router.push('/dashboard/departments');
-  };
-
   return (
     <div className='container mx-auto py-6'>
       <div className='flex items-center justify-between mb-6'>
@@ -170,7 +145,7 @@ export default function DepartmentDetailPage({
         </div>
         <div className='flex gap-2'>
           <Button variant='outline' asChild>
-            <Link href={`/dashboard/departments/${params.id}/edit`}>
+            <Link href={`/dashboard/departments/${id}/edit`}>
               <FileEdit className='mr-2 h-4 w-4' /> Edit Department
             </Link>
           </Button>
@@ -203,8 +178,16 @@ export default function DepartmentDetailPage({
               <div className='flex items-start gap-2'>
                 <User className='h-5 w-5 text-muted-foreground mt-0.5' />
                 <div>
+                  <h4 className='font-medium'>Department Code</h4>
+                  <p className='text-muted-foreground'>{department.code}</p>
+                </div>
+              </div>
+
+              <div className='flex items-start gap-2'>
+                <User className='h-5 w-5 text-muted-foreground mt-0.5' />
+                <div>
                   <h4 className='font-medium'>Head of Department</h4>
-                  <p className='text-muted-foreground'>{department.head}</p>
+                  <p className='text-muted-foreground'>{department.headId}</p>
                 </div>
               </div>
 
@@ -220,7 +203,9 @@ export default function DepartmentDetailPage({
                 <Phone className='h-5 w-5 text-muted-foreground mt-0.5' />
                 <div>
                   <h4 className='font-medium'>Phone</h4>
-                  <p className='text-muted-foreground'>{department.phone}</p>
+                  <p className='text-muted-foreground'>
+                    {department.phoneNumber}
+                  </p>
                 </div>
               </div>
 
@@ -237,7 +222,7 @@ export default function DepartmentDetailPage({
                 <div>
                   <h4 className='font-medium'>Created On</h4>
                   <p className='text-muted-foreground'>
-                    {new Date(department.createdAt).toLocaleDateString()}
+                    {formatDate(department.createdAt, 'dd/MM/yyyy')}
                   </p>
                 </div>
               </div>
@@ -255,14 +240,14 @@ export default function DepartmentDetailPage({
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>
-                {department.faculty.map((faculty) => (
-                  <div key={faculty.id} className='flex flex-col space-y-1'>
-                    <h4 className='font-medium'>{faculty.name}</h4>
+                {faculty.map((member) => (
+                  <div key={member.id} className='flex flex-col space-y-1'>
+                    <h4 className='font-medium'>{member.name}</h4>
                     <p className='text-sm text-muted-foreground'>
-                      {faculty.position}
+                      {member.position}
                     </p>
                     <p className='text-sm text-muted-foreground'>
-                      {faculty.email}
+                      {member.email}
                     </p>
                     <Separator className='mt-2' />
                   </div>
@@ -285,7 +270,7 @@ export default function DepartmentDetailPage({
             </CardHeader>
             <CardContent>
               <div className='space-y-4'>
-                {department.courses.map((course) => (
+                {courses.map((course) => (
                   <div key={course.id} className='flex flex-col space-y-1'>
                     <h4 className='font-medium'>{course.name}</h4>
                     <p className='text-sm text-muted-foreground'>
@@ -325,8 +310,16 @@ export default function DepartmentDetailPage({
             <AlertDialogAction
               onClick={handleDeleteDepartment}
               className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              disabled={isDeleting}
             >
-              Delete
+              {isDeleting ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

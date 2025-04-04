@@ -1,6 +1,7 @@
 import instance from '@/apis/instance';
 import { STUDENTS_KEYS } from '@/apis/students/keys';
-import { FilterStudent, StudentInfo } from '@/apis/students/type';
+import { StudentInfo } from '@/apis/students/type';
+import { FilterCommon } from '@/types/filter-common';
 import { ListResponse } from '@/types/list-response';
 import { useQuery } from '@tanstack/react-query';
 
@@ -12,7 +13,7 @@ export enum StudentStatusFilter {
   INACTIVE = 'inactive',
 }
 
-export const useListStudents = (filter: FilterStudent) => {
+export const useListStudents = (filter: FilterCommon) => {
   return useQuery({
     queryKey: STUDENTS_KEYS.listStudents(filter),
     queryFn: async () => {

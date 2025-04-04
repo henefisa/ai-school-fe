@@ -38,30 +38,16 @@ export function Contact({ form, handleNext, handlePrevious }: ContactProps) {
       <CardContent className='space-y-4'>
         <FormField
           control={form.control}
-          name='contact.addressLine1'
+          name='contact.street'
           render={({ field }) => (
             <FormItem className='space-y-2'>
-              <FormLabel>Address Line 1</FormLabel>
+              <FormLabel>Street</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
                   placeholder='Enter street address'
                   required
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name='contact.addressLine2'
-          render={({ field }) => (
-            <FormItem className='space-y-2'>
-              <FormLabel>Address Line 2 (Optional)</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder='Apartment, suite, unit, etc.' />
               </FormControl>
               <FormMessage />
             </FormItem>

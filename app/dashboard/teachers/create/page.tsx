@@ -18,6 +18,7 @@ import { getError } from '@/utils/getError';
 import { useCreateTeacher } from '@/apis/teachers/create';
 import { EmploymentType } from '@/types/employment-type';
 import { TitleType } from '@/types/title';
+import { useListDepartments } from '@/apis/departments/list-departments';
 
 export enum TeacherTab {
   Personal = 'personal',
@@ -39,8 +40,7 @@ export const defaultValues: z.infer<typeof formSchema> = {
     photo: undefined,
   },
   contact: {
-    addressLine1: '',
-    addressLine2: '',
+    street: '',
     city: '',
     state: '',
     zipCode: '',
@@ -50,7 +50,7 @@ export const defaultValues: z.infer<typeof formSchema> = {
     emergencyContact: '',
   },
   professional: {
-    departmentId: '9dd49ced-98fd-4c2b-9440-63d2b0bf681c',
+    departmentId: '',
     position: 'teacher',
     joinDate: '',
     employmentType: EmploymentType.FullTime,
@@ -64,6 +64,13 @@ export default function CreateTeacherPage() {
   const { toast } = useToast();
   const createTeacherMutation = useCreateTeacher();
   const [activeTab, setActiveTab] = useState(TeacherTab.Personal);
+
+  const { data } = useListDepartments({
+    page: 1,
+    pageSize: 50,
+    q: '',
+    status: true,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -149,6 +156,7 @@ export default function CreateTeacherPage() {
             </TabsContent>
             <TabsContent value={TeacherTab.Professional} className='space-y-4'>
               <Professional
+                listDepartments={data?.results ?? []}
                 form={form}
                 handlePrevious={() => setActiveTab(TeacherTab.Contact)}
                 isSubmitting={createTeacherMutation.isPending}

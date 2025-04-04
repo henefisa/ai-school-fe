@@ -1,48 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  type SortingState,
-  type VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
-import {
-  ArrowUpDown,
-  ChevronDown,
-  MoreHorizontal,
-  Plus,
+  PlusCircle,
   Search,
-  Trash2,
-  FileEdit,
+  MoreHorizontal,
+  Loader2,
+  Download,
+  Trash,
   Eye,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -53,384 +24,323 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { toast } from '@/components/ui/use-toast';
-
-// Sample data for departments
-const data = [
-  {
-    id: '1',
-    name: 'Mathematics',
-    description: 'Mathematics and Statistics Department',
-    head: 'Dr. John Smith',
-    email: 'math@school.edu',
-    phone: '(555) 123-4567',
-    location: 'Building A, Room 101',
-    createdAt: '2023-01-15',
-  },
-  {
-    id: '2',
-    name: 'Science',
-    description: 'Natural Sciences Department',
-    head: 'Dr. Emily Johnson',
-    email: 'science@school.edu',
-    phone: '(555) 123-4568',
-    location: 'Building B, Room 205',
-    createdAt: '2023-01-20',
-  },
-  {
-    id: '3',
-    name: 'English',
-    description: 'English Language and Literature Department',
-    head: 'Prof. Michael Brown',
-    email: 'english@school.edu',
-    phone: '(555) 123-4569',
-    location: 'Building C, Room 310',
-    createdAt: '2023-02-05',
-  },
-  {
-    id: '4',
-    name: 'History',
-    description: 'History and Social Studies Department',
-    head: 'Dr. Sarah Wilson',
-    email: 'history@school.edu',
-    phone: '(555) 123-4570',
-    location: 'Building A, Room 215',
-    createdAt: '2023-02-10',
-  },
-  {
-    id: '5',
-    name: 'Physical Education',
-    description: 'Physical Education and Sports Department',
-    head: 'Coach Robert Davis',
-    email: 'pe@school.edu',
-    phone: '(555) 123-4571',
-    location: 'Gymnasium, Office 3',
-    createdAt: '2023-03-01',
-  },
-];
-
-export type Department = {
-  id: string;
-  name: string;
-  description: string;
-  head: string;
-  email: string;
-  phone: string;
-  location: string;
-  createdAt: string;
-};
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { DEPARTMENTS_KEYS } from '@/apis/departments/keys';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  DepartmentStatusFilter,
+  useListDepartments,
+} from '@/apis/departments/list-departments';
+import { DepartmentResponse } from '@/apis/departments/type';
+import { useDeleteDepartment } from '@/apis/departments/delete';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { getError } from '@/utils/getError';
 
 export default function DepartmentsPage() {
   const router = useRouter();
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [departmentToDelete, setDepartmentToDelete] =
-    useState<Department | null>(null);
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<string>(
+    DepartmentStatusFilter.ALL
+  );
 
-  // Define columns for the departments table
-  const columns: ColumnDef<Department>[] = [
-    {
-      accessorKey: 'name',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant='ghost'
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Department Name
-            <ArrowUpDown className='ml-2 h-4 w-4' />
-          </Button>
-        );
-      },
-      cell: ({ row }) => (
-        <div className='font-medium'>{row.getValue('name')}</div>
-      ),
-    },
-    {
-      accessorKey: 'head',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant='ghost'
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Head of Department
-            <ArrowUpDown className='ml-2 h-4 w-4' />
-          </Button>
-        );
-      },
-      cell: ({ row }) => <div>{row.getValue('head')}</div>,
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ row }) => <div>{row.getValue('email')}</div>,
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone',
-      cell: ({ row }) => <div>{row.getValue('phone')}</div>,
-    },
-    {
-      accessorKey: 'location',
-      header: 'Location',
-      cell: ({ row }) => <div>{row.getValue('location')}</div>,
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const department = row.original;
+  const [selectedDepartment, setSelectedDepartment] =
+    useState<DepartmentResponse>();
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const pageSize = 10;
 
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='ghost' className='h-8 w-8 p-0'>
-                <span className='sr-only'>Open menu</span>
-                <MoreHorizontal className='h-4 w-4' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() =>
-                  router.push(`/dashboard/departments/${department.id}`)
-                }
-              >
-                <Eye className='mr-2 h-4 w-4' />
-                View details
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  router.push(`/dashboard/departments/${department.id}/edit`)
-                }
-              >
-                <FileEdit className='mr-2 h-4 w-4' />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-destructive focus:text-destructive'
-                onClick={() => setDepartmentToDelete(department)}
-              >
-                <Trash2 className='mr-2 h-4 w-4' />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
+  const getStatusBoolean = () => {
+    if (statusFilter === DepartmentStatusFilter.ACTIVE) return true;
+    if (statusFilter === DepartmentStatusFilter.INACTIVE) return false;
+    return undefined;
+  };
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
+  const { data, isLoading } = useListDepartments({
+    page: currentPage,
+    pageSize,
+    q: searchQuery,
+    status: getStatusBoolean(),
   });
 
-  // Function to handle department deletion
-  const handleDeleteDepartment = () => {
-    if (departmentToDelete) {
-      // In a real application, you would call an API to delete the department
-      // For now, we'll just show a success toast
+  const totalPages = useMemo(() => Math.ceil((data?.count || 0) / 10), [data]);
+
+  const deleteDepartmentMutation = useDeleteDepartment({
+    queryKey: DEPARTMENTS_KEYS.listDepartments({
+      page: currentPage,
+      pageSize,
+      q: searchQuery,
+    }),
+  });
+
+  const handleConfirmDelete = async () => {
+    if (!selectedDepartment?.id) return;
+
+    try {
+      await deleteDepartmentMutation.mutateAsync(selectedDepartment.id);
       toast({
-        title: 'Department deleted',
-        description: `${departmentToDelete.name} has been deleted successfully.`,
+        title: 'Department Deleted',
+        description: 'Department has been deleted successfully.',
       });
-      setDepartmentToDelete(null);
+      setShowConfirmDelete(false);
+      setSelectedDepartment({} as DepartmentResponse);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description:
+          getError(error) ?? 'Failed to delete department. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
+  const handleDeleteClick = (department: DepartmentResponse) => {
+    setSelectedDepartment(department);
+    setShowConfirmDelete(true);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
-    <div className='container mx-auto py-6'>
-      <div className='flex items-center justify-between mb-6'>
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
         <h1 className='text-3xl font-bold tracking-tight'>Departments</h1>
-        <Button asChild>
-          <Link href='/dashboard/departments/create'>
-            <Plus className='mr-2 h-4 w-4' /> Add Department
-          </Link>
-        </Button>
+        <Link href='/dashboard/departments/create'>
+          <Button>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Add New Department
+          </Button>
+        </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Manage Departments</CardTitle>
-          <CardDescription>
-            View and manage all departments in your school. You can add, edit,
-            or delete departments as needed.
-          </CardDescription>
+          <CardTitle>Departments Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className='flex items-center justify-between py-4'>
-            <div className='flex items-center relative'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Search departments...'
-                value={
-                  (table.getColumn('name')?.getFilterValue() as string) ?? ''
-                }
-                onChange={(event) =>
-                  table.getColumn('name')?.setFilterValue(event.target.value)
-                }
-                className='pl-8 w-[300px]'
-              />
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+            <div className='space-y-2'>
+              <label htmlFor='search' className='text-sm font-medium'>
+                Search Departments
+              </label>
+              <div className='relative'>
+                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                <Input
+                  id='search'
+                  type='search'
+                  placeholder='Search by name...'
+                  className='pl-8'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' className='ml-auto'>
-                  Columns <ChevronDown className='ml-2 h-4 w-4' />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className='capitalize'
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) =>
-                          column.toggleVisibility(!!value)
-                        }
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    );
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className='rounded-md border'>
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && 'selected'}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className='h-24 text-center'
-                    >
-                      No departments found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <div className='flex items-center justify-end space-x-2 py-4'>
-            <div className='flex-1 text-sm text-muted-foreground'>
-              {table.getFilteredSelectedRowModel().rows.length} of{' '}
-              {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
-            <div className='space-x-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+            <div className='space-y-2'>
+              <label htmlFor='status' className='text-sm font-medium'>
+                Status
+              </label>
+              <Select
+                value={statusFilter}
+                onValueChange={(value: DepartmentStatusFilter) =>
+                  setStatusFilter(value)
+                }
               >
-                Previous
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </Button>
+                <SelectTrigger id='status'>
+                  <SelectValue placeholder='Select status' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={DepartmentStatusFilter.ALL}>
+                    All Departments
+                  </SelectItem>
+                  <SelectItem value={DepartmentStatusFilter.ACTIVE}>
+                    Active
+                  </SelectItem>
+                  <SelectItem value={DepartmentStatusFilter.INACTIVE}>
+                    Inactive
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
       </Card>
+      <Card>
+        <CardHeader className='flex flex-row items-center justify-between'>
+          <CardTitle>Departments List</CardTitle>
+          <Button variant='outline' size='sm'>
+            <Download className='mr-2 h-4 w-4' />
+            Export
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className='flex h-[300px] items-center justify-center'>
+              <Loader2 className='h-8 w-8 animate-spin text-primary' />
+            </div>
+          ) : (
+            <>
+              <div className='rounded-md border'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className='w-[200px]'>
+                        Department Name
+                      </TableHead>
+                      <TableHead>Code</TableHead>
+                      <TableHead>Head of Department</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className='text-right'>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data?.results.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className='h-24 text-center'>
+                          No departments found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      data?.results.map((department: DepartmentResponse) => (
+                        <TableRow key={department.id}>
+                          <TableCell className='font-medium'>
+                            {department.name}
+                          </TableCell>
+                          <TableCell>{department.code}</TableCell>
+                          <TableCell>{department.headId}</TableCell>
+                          <TableCell>{department.email}</TableCell>
+                          <TableCell>{department.phoneNumber}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                department.deletedAt ? 'destructive' : 'default'
+                              }
+                            >
+                              {department.deletedAt ? 'Inactive' : 'Active'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className='text-right flex gap-2 justify-end'>
+                            <Link href={`departments/${department.id}`}>
+                              <Button variant='default' size='sm'>
+                                <Eye />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant='destructive'
+                              size='sm'
+                              onClick={() => handleDeleteClick(department)}
+                            >
+                              <Trash />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!departmentToDelete}
-        onOpenChange={() => setDepartmentToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              department
-              {departmentToDelete && (
-                <strong> {departmentToDelete.name}</strong>
-              )}{' '}
-              and remove its data from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteDepartment}
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              {data && totalPages > 0 && (
+                <div className='mt-4 flex justify-center'>
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() =>
+                            handlePageChange(Math.max(1, currentPage - 1))
+                          }
+                          className={
+                            currentPage === 1
+                              ? 'pointer-events-none opacity-50'
+                              : 'cursor-pointer'
+                          }
+                        />
+                      </PaginationItem>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      )}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() =>
+                            handlePageChange(
+                              Math.min(totalPages, currentPage + 1)
+                            )
+                          }
+                          className={
+                            currentPage === totalPages
+                              ? 'pointer-events-none opacity-50'
+                              : 'cursor-pointer'
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+      <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm deletion</DialogTitle>
+            {selectedDepartment && (
+              <DialogDescription>
+                Are you sure you want to delete <b>{selectedDepartment.name}</b>{' '}
+                department? This action cannot be undone.
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setShowConfirmDelete(false)}
             >
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={handleConfirmDelete}>
               Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
