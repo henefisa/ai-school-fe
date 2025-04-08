@@ -20,7 +20,10 @@ export const useListDepartments = (filter: FilterCommon) => {
       const { data } = await instance.get<ListResponse<DepartmentResponse>>(
         URL,
         {
-          params: filter,
+          params: {
+            ...filter,
+            includeHead: true,
+          },
         }
       );
       return data;

@@ -24,12 +24,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -251,7 +245,7 @@ export default function TeachersPage() {
                             </p>
                           </div>
                         </TableCell>
-                        <TableCell>{teacher.departmentId}</TableCell>
+                        <TableCell>{teacher.departments[0]?.name}</TableCell>
                         <TableCell>{teacher.email}</TableCell>
                         <TableCell>
                           {format(new Date(teacher.hireDate), 'dd/MM/yyyy')}

@@ -12,7 +12,10 @@ export const useListTeachers = (filter: FilterCommon) => {
     queryKey: TEACHERS_KEYS.listTeachers(filter),
     queryFn: async () => {
       const { data } = await instance.get<ListResponse<TeacherInfo>>(URL, {
-        params: filter,
+        params: {
+          ...filter,
+          includedDepartments: true,
+        },
       });
 
       return data;

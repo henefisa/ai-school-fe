@@ -1,3 +1,5 @@
+import { TeacherResponse } from '@/apis/teachers/type';
+
 export interface DepartmentPayload {
   name: string;
   code: string;
@@ -10,6 +12,7 @@ export interface DepartmentPayload {
 
 export interface DepartmentResponse extends DepartmentPayload {
   id: string;
+  head: TeacherResponse;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

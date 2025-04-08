@@ -40,6 +40,7 @@ import DepartmentDetailLoading from '../loading';
 import { useGetDepartment } from '@/apis/departments/get-department';
 import { useDeleteDepartment } from '@/apis/departments/delete';
 import { formatDate } from 'date-fns';
+import { getDisplayName } from '@/utils/get-display-name';
 
 export default function DepartmentDetailPage({
   params,
@@ -187,7 +188,9 @@ export default function DepartmentDetailPage({
                 <User className='h-5 w-5 text-muted-foreground mt-0.5' />
                 <div>
                   <h4 className='font-medium'>Head of Department</h4>
-                  <p className='text-muted-foreground'>{department.headId}</p>
+                  <p className='text-muted-foreground'>
+                    {getDisplayName(department.head)}
+                  </p>
                 </div>
               </div>
 

@@ -227,7 +227,9 @@ export default function TeacherDetailPage({
                 </Avatar>
                 <div>
                   <h2 className='text-xl font-bold'>{getDisplayName(data)}</h2>
-                  <p className='text-muted-foreground'>{data.departmentId}</p>
+                  <p className='text-muted-foreground'>
+                    {data.departments[0].name}
+                  </p>
                   <Badge
                     className='mt-2'
                     variant={data.deletedAt ? 'destructive' : 'default'}

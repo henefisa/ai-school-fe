@@ -57,6 +57,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getError } from '@/utils/getError';
+import { getDisplayName } from '@/utils/get-display-name';
 
 export default function DepartmentsPage() {
   const router = useRouter();
@@ -232,7 +233,9 @@ export default function DepartmentsPage() {
                             {department.name}
                           </TableCell>
                           <TableCell>{department.code}</TableCell>
-                          <TableCell>{department.headId}</TableCell>
+                          <TableCell>
+                            {getDisplayName(department.head)}
+                          </TableCell>
                           <TableCell>{department.email}</TableCell>
                           <TableCell>{department.phoneNumber}</TableCell>
                           <TableCell>
