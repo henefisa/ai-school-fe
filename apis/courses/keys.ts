@@ -6,6 +6,6 @@ export const COURSES_KEYS = {
   listCourses: (filter: FilterCourse) => [
     COURSES_KEYS.course(),
     'listCourses',
-    { ...filter },
+    filter,
   ],
 };

@@ -6,6 +6,6 @@ export const DEPARTMENTS_KEYS = {
   listDepartments: (filter: FilterCommon) => [
     DEPARTMENTS_KEYS.department(),
     'listDepartments',
-    { ...filter },
+    filter,
   ],
 };

@@ -23,6 +23,7 @@ import {
   LucideIcon,
   CircleUser,
   Flame,
+  School,
 } from 'lucide-react';
 import { Role } from '@/types/role';
 
@@ -85,6 +86,11 @@ export function DashboardSidebar({
           name: 'Courses',
           href: '/dashboard/courses',
           icon: BookOpenIcon,
+        },
+        {
+          name: 'Rooms',
+          href: '/dashboard/rooms',
+          icon: School,
         },
         {
           name: 'Departments',

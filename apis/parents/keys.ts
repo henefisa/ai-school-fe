@@ -6,6 +6,6 @@ export const PARENTS_KEYS = {
   listParents: (filter: FilterCommon) => [
     PARENTS_KEYS.parent(),
     'listParents',
-    { ...filter },
+    filter,
   ],
 };
