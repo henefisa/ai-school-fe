@@ -27,17 +27,21 @@ export const defaultOperationalHours: OperationalHours = {
 };
 
 export const defaultFormValues: RoomFormValues = {
-  roomNumber: '',
-  building: '',
-  name: '',
-  capacity: 0,
-  roomType: RoomType.CLASS_ROOM,
-  hasProjector: false,
-  hasWhiteboard: false,
-  features: [],
+  basicInfo: {
+    roomNumber: '',
+    building: '',
+    name: '',
+    capacity: 0,
+    roomType: RoomType.CLASS_ROOM,
+    status: RoomStatus.ACTIVE,
+    location: '',
+    description: '',
+    notes: '',
+  },
+  featuresInfo: {
+    hasProjector: false,
+    hasWhiteboard: false,
+    features: [],
+  },
   operationalHours: defaultOperationalHours,
-  status: RoomStatus.ACTIVE,
-  location: '',
-  description: '',
-  notes: '',
 };

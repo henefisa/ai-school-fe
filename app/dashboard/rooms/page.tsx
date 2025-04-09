@@ -52,6 +52,10 @@ import { useListRooms } from '@/apis/rooms/list-rooms';
 import { useDeleteRoom } from '@/apis/rooms/delete';
 import { getError } from '@/utils/getError';
 import { useToast } from '@/hooks/use-toast';
+import {
+  roomTypeOptions,
+  statusOptions,
+} from '@/components/rooms/create/basic-info-tab';
 
 export default function RoomsPage() {
   const { toast } = useToast();
@@ -231,7 +235,11 @@ export default function RoomsPage() {
                           </TableCell>
                           <TableCell>{room.building}</TableCell>
                           <TableCell>
-                            {room.roomType.replace('_', ' ')}
+                            {
+                              roomTypeOptions.find(
+                                (option) => option.value === room.roomType
+                              )?.label
+                            }
                           </TableCell>
                           <TableCell>{room.capacity}</TableCell>
                           <TableCell>
@@ -256,7 +264,11 @@ export default function RoomsPage() {
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(room.status)}>
-                              {room.status}
+                              {
+                                statusOptions.find(
+                                  (option) => option.value === room.status
+                                )?.label
+                              }
                             </Badge>
                           </TableCell>
                           <TableCell className='text-right flex gap-2 justify-end'>

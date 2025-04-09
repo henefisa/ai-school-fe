@@ -40,16 +40,19 @@ export function FeaturesTab({
 
   const addFeature = () => {
     if (newFeature.trim() !== '') {
-      const currentFeatures = form.getValues('features');
-      form.setValue('features', [...currentFeatures, newFeature.trim()]);
+      const currentFeatures = form.getValues('featuresInfo.features');
+      form.setValue('featuresInfo.features', [
+        ...currentFeatures,
+        newFeature.trim(),
+      ]);
       setNewFeature('');
     }
   };
 
   const removeFeature = (index: number) => {
-    const currentFeatures = form.getValues('features');
+    const currentFeatures = form.getValues('featuresInfo.features');
     form.setValue(
-      'features',
+      'featuresInfo.features',
       currentFeatures.filter((_, i) => i !== index)
     );
   };
@@ -66,7 +69,7 @@ export function FeaturesTab({
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           <FormField
             control={form.control}
-            name='hasProjector'
+            name='featuresInfo.hasProjector'
             render={({ field }) => (
               <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4'>
                 <FormControl>
@@ -86,7 +89,7 @@ export function FeaturesTab({
           />
           <FormField
             control={form.control}
-            name='hasWhiteboard'
+            name='featuresInfo.hasWhiteboard'
             render={({ field }) => (
               <FormItem className='flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4'>
                 <FormControl>
@@ -125,12 +128,12 @@ export function FeaturesTab({
           </div>
 
           <div className='space-y-2'>
-            {form.watch('features').length === 0 ? (
+            {form.watch('featuresInfo.features').length === 0 ? (
               <p className='text-sm text-muted-foreground'>
                 No features added yet.
               </p>
             ) : (
-              form.watch('features').map((feature, index) => (
+              form.watch('featuresInfo.features').map((feature, index) => (
                 <div
                   key={index}
                   className='flex items-center justify-between rounded-md border px-4 py-2'

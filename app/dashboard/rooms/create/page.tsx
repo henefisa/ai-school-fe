@@ -16,6 +16,7 @@ import { BasicInfoTab } from '@/components/rooms/create/basic-info-tab';
 import { FeaturesTab } from '@/components/rooms/create/features-tab';
 import { ScheduleTab } from '@/components/rooms/create/schedule-tab';
 import { useToast } from '@/hooks/use-toast';
+import { RoomPayload } from '@/apis/rooms/type';
 
 export enum RoomTab {
   Basic = 'basic',
@@ -45,15 +46,7 @@ export default function CreateRoomPage() {
   };
 
   const handleBasicNext = async () => {
-    const isValid =
-      (await form.trigger('name')) &&
-      (await form.trigger('roomNumber')) &&
-      (await form.trigger('building')) &&
-      (await form.trigger('capacity')) &&
-      (await form.trigger('roomType')) &&
-      (await form.trigger('status')) &&
-      (await form.trigger('location')) &&
-      (await form.trigger('description'));
+    const isValid = await form.trigger('basicInfo');
 
     if (isValid) {
       setActiveTab(RoomTab.Features);
@@ -61,10 +54,7 @@ export default function CreateRoomPage() {
   };
 
   const handleFeaturesNext = async () => {
-    const isValid =
-      (await form.trigger('hasProjector')) &&
-      (await form.trigger('hasWhiteboard')) &&
-      (await form.trigger('features'));
+    const isValid = await form.trigger('featuresInfo');
 
     if (isValid) {
       setActiveTab(RoomTab.Schedule);
@@ -81,11 +71,19 @@ export default function CreateRoomPage() {
 
   const onSubmit = async (data: RoomFormValues) => {
     try {
-      await createRoomMutation.mutateAsync(data);
+      const { basicInfo, featuresInfo, operationalHours } = data;
+
+      const roomData: RoomPayload = {
+        ...basicInfo,
+        ...featuresInfo,
+        operationalHours,
+      };
+
+      await createRoomMutation.mutateAsync(roomData);
 
       toast({
         title: 'Room created successfully',
-        description: `${data.name} has been added to the system.`,
+        description: `${basicInfo.name} has been added to the system.`,
       });
 
       router.push('/dashboard/rooms');

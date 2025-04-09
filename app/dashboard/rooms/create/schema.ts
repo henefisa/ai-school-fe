@@ -1,12 +1,40 @@
-import * as z from 'zod';
 import { RoomStatus, RoomType } from '@/apis/rooms/type';
+import { z } from 'zod';
 
-export const timeSlotSchema = z
+export const MAX_CAPACITY = 1000;
+export const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+
+const basicInfoSchema = z.object({
+  name: z.string().trim().min(1, 'Room name is required'),
+  roomNumber: z.string().trim().min(1, 'Room number is required'),
+  building: z.string().trim().min(1, 'Building name is required'),
+  capacity: z.coerce
+    .number()
+    .min(1, 'Capacity must be at least 1')
+    .max(MAX_CAPACITY, `Capacity must be less than ${MAX_CAPACITY}`),
+  roomType: z.nativeEnum(RoomType, {
+    required_error: 'Room type is required',
+  }),
+  status: z.nativeEnum(RoomStatus, {
+    required_error: 'Status is required',
+  }),
+  location: z.string().trim().min(1, 'Location is required'),
+  description: z.string().trim().min(1, 'Description is required'),
+  notes: z.string().optional(),
+});
+
+const featuresSchema = z.object({
+  hasProjector: z.boolean().default(false),
+  hasWhiteboard: z.boolean().default(false),
+  features: z.array(z.string()).default([]),
+});
+
+const timeSlotSchema = z
   .object({
-    start: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    start: z.string().regex(timeRegex, {
       message: 'Time must be in format HH:MM',
     }),
-    end: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    end: z.string().regex(timeRegex, {
       message: 'Time must be in format HH:MM',
     }),
   })
@@ -20,100 +48,6 @@ export const timeSlotSchema = z
     }
   );
 
-export const operationalHoursSchema = z.object({
-  monday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-  tuesday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-  wednesday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-  thursday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-  friday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-  saturday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-  sunday: z
-    .array(timeSlotSchema)
-    .optional()
-    .default([])
-    .superRefine((slots, ctx) => {
-      if (hasOverlappingTimeSlots(slots)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Time slots cannot overlap',
-          path: [],
-        });
-      }
-    }),
-});
-
 function hasOverlappingTimeSlots(
   slots: { start: string; end: string }[]
 ): boolean {
@@ -123,7 +57,6 @@ function hasOverlappingTimeSlots(
 
   for (let i = 0; i < sortedSlots.length - 1; i++) {
     if (sortedSlots[i].end > sortedSlots[i + 1].start) {
-      return true;
     }
   }
 
@@ -131,35 +64,101 @@ function hasOverlappingTimeSlots(
 }
 
 export const roomFormSchema = z.object({
-  roomNumber: z.string().min(1, {
-    message: 'Room number is required.',
+  basicInfo: basicInfoSchema,
+  featuresInfo: featuresSchema,
+  operationalHours: z.object({
+    monday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
+    tuesday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
+    wednesday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
+    thursday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
+    friday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
+    saturday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
+    sunday: z
+      .array(timeSlotSchema)
+      .optional()
+      .default([])
+      .superRefine((slots, ctx) => {
+        if (hasOverlappingTimeSlots(slots)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Time slots cannot overlap',
+            path: [],
+          });
+        }
+      }),
   }),
-  building: z.string().min(1, {
-    message: 'Building name is required.',
-  }),
-  name: z.string().min(2, {
-    message: 'Room name must be at least 2 characters.',
-  }),
-  capacity: z.coerce.number().min(1, {
-    message: 'Capacity must be at least 1.',
-  }),
-  roomType: z.nativeEnum(RoomType, {
-    required_error: 'Please select a room type.',
-  }),
-  hasProjector: z.boolean().default(false),
-  hasWhiteboard: z.boolean().default(false),
-  features: z.array(z.string()).default([]),
-  operationalHours: operationalHoursSchema,
-  status: z.nativeEnum(RoomStatus, {
-    required_error: 'Please select a status.',
-  }),
-  location: z.string().min(1, {
-    message: 'Location is required.',
-  }),
-  description: z.string().min(1, {
-    message: 'Description is required.',
-  }),
-  notes: z.string().min(1, { message: 'Notes is required.' }),
 });
 
 export type RoomFormValues = z.infer<typeof roomFormSchema>;

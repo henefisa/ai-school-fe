@@ -1,6 +1,6 @@
 'use client';
 
-import { Building } from 'lucide-react';
+import { Building, Check, ChevronsUpDown } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -18,18 +18,26 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { RoomStatus, RoomType } from '@/apis/rooms/type';
 import type { UseFormReturn } from 'react-hook-form';
 import type { RoomFormValues } from '@/app/dashboard/rooms/create/schema';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface BasicInfoTabProps {
   form: UseFormReturn<RoomFormValues>;
@@ -37,11 +45,28 @@ interface BasicInfoTabProps {
   isEdit?: boolean;
 }
 
+export const statusOptions = [
+  { value: RoomStatus.ACTIVE, label: 'Active' },
+  { value: RoomStatus.MAINTENANCE, label: 'Maintenance' },
+  { value: RoomStatus.INACTIVE, label: 'Inactive' },
+];
+
+export const roomTypeOptions = [
+  { value: RoomType.CLASS_ROOM, label: 'Classroom' },
+  { value: RoomType.LAB, label: 'Lab' },
+  { value: RoomType.OFFICE, label: 'Office' },
+  { value: RoomType.AUDITORIUM, label: 'Auditorium' },
+  { value: RoomType.OTHER, label: 'Other' },
+];
+
 export function BasicInfoTab({
   form,
   handleNext,
   isEdit = false,
 }: BasicInfoTabProps) {
+  const [openStatus, setOpenStatus] = useState(false);
+  const [openRoomType, setOpenRoomType] = useState(false);
+
   return (
     <Card>
       <CardHeader>
@@ -59,7 +84,7 @@ export function BasicInfoTab({
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           <FormField
             control={form.control}
-            name='name'
+            name='basicInfo.name'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Room Name *</FormLabel>
@@ -75,7 +100,7 @@ export function BasicInfoTab({
           />
           <FormField
             control={form.control}
-            name='roomNumber'
+            name='basicInfo.roomNumber'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Room Number *</FormLabel>
@@ -94,7 +119,7 @@ export function BasicInfoTab({
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           <FormField
             control={form.control}
-            name='building'
+            name='basicInfo.building'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Building *</FormLabel>
@@ -107,7 +132,7 @@ export function BasicInfoTab({
           />
           <FormField
             control={form.control}
-            name='capacity'
+            name='basicInfo.capacity'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Capacity *</FormLabel>
@@ -126,60 +151,118 @@ export function BasicInfoTab({
         <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           <FormField
             control={form.control}
-            name='roomType'
+            name='basicInfo.roomType'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Room Type *</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select room type' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={RoomType.CLASS_ROOM}>
-                      Classroom
-                    </SelectItem>
-                    <SelectItem value={RoomType.LAB}>Lab</SelectItem>
-                    <SelectItem value={RoomType.OFFICE}>Office</SelectItem>
-                    <SelectItem value={RoomType.AUDITORIUM}>
-                      Auditorium
-                    </SelectItem>
-                    <SelectItem value={RoomType.OTHER}>Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Popover open={openRoomType} onOpenChange={setOpenRoomType}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant='outline'
+                        role='combobox'
+                        aria-expanded={openRoomType}
+                        className='w-full justify-between'
+                      >
+                        {field.value
+                          ? roomTypeOptions.find(
+                              (option) => option.value === field.value
+                            )?.label
+                          : 'Select room type'}
+                        <ChevronsUpDown className='opacity-50' />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-full p-0'>
+                      <Command>
+                        <CommandInput placeholder='Search room type' />
+                        <CommandList>
+                          <CommandEmpty>No room type found.</CommandEmpty>
+                          <CommandGroup>
+                            {roomTypeOptions.map((option) => (
+                              <CommandItem
+                                key={option.value}
+                                value={option.value}
+                                onSelect={(currentValue) => {
+                                  field.onChange(currentValue);
+                                  setOpenRoomType(false);
+                                }}
+                              >
+                                {option.label}
+                                <Check
+                                  className={cn(
+                                    'ml-auto',
+                                    field.value === option.value
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name='status'
+            name='basicInfo.status'
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status *</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select status' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value={RoomStatus.ACTIVE}>Active</SelectItem>
-                    <SelectItem value={RoomStatus.MAINTENANCE}>
-                      Maintenance
-                    </SelectItem>
-                    <SelectItem value={RoomStatus.INACTIVE}>
-                      Inactive
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Popover open={openStatus} onOpenChange={setOpenStatus}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant='outline'
+                        role='combobox'
+                        aria-expanded={openStatus}
+                        className='w-full justify-between'
+                      >
+                        {field.value
+                          ? statusOptions.find(
+                              (option) => option.value === field.value
+                            )?.label
+                          : 'Select status'}
+                        <ChevronsUpDown className='opacity-50' />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-full p-0'>
+                      <Command>
+                        <CommandInput placeholder='Search status' />
+                        <CommandList>
+                          <CommandEmpty>No status found.</CommandEmpty>
+                          <CommandGroup>
+                            {statusOptions.map((option) => (
+                              <CommandItem
+                                key={option.value}
+                                value={option.value}
+                                onSelect={(currentValue) => {
+                                  field.onChange(currentValue);
+                                  setOpenStatus(false);
+                                }}
+                              >
+                                {option.label}
+                                <Check
+                                  className={cn(
+                                    'ml-auto',
+                                    field.value === option.value
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
                 <FormDescription>Current status of the room.</FormDescription>
                 <FormMessage />
               </FormItem>
@@ -189,7 +272,7 @@ export function BasicInfoTab({
 
         <FormField
           control={form.control}
-          name='location'
+          name='basicInfo.location'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Location *</FormLabel>
@@ -209,7 +292,7 @@ export function BasicInfoTab({
 
         <FormField
           control={form.control}
-          name='description'
+          name='basicInfo.description'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description *</FormLabel>
@@ -227,7 +310,7 @@ export function BasicInfoTab({
 
         <FormField
           control={form.control}
-          name='notes'
+          name='basicInfo.notes'
           render={({ field }) => (
             <FormItem>
               <FormLabel>Notes *</FormLabel>

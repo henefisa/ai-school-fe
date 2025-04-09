@@ -40,7 +40,7 @@ export default function EditRoomPage({
   const router = useRouter();
   const { data: room, isLoading } = useGetRoom(id);
   const editRoomMutation = useEditRoom({
-    queryKey: [ROOMS_KEYS.getRoom(id)],
+    queryKey: ROOMS_KEYS.getRoom(id),
   });
   const [activeTab, setActiveTab] = useState<RoomTab>(RoomTab.Basic);
 
@@ -52,19 +52,23 @@ export default function EditRoomPage({
   useEffect(() => {
     if (room) {
       form.reset({
-        roomNumber: room.roomNumber,
-        building: room.building,
-        name: room.name,
-        capacity: room.capacity,
-        roomType: room.roomType,
-        hasProjector: room.hasProjector,
-        hasWhiteboard: room.hasWhiteboard,
-        features: room.features,
+        basicInfo: {
+          roomNumber: room.roomNumber,
+          building: room.building,
+          name: room.name,
+          location: room.location,
+          description: room.description,
+          status: room.status,
+          capacity: room.capacity,
+          roomType: room.roomType,
+          notes: room.notes || '',
+        },
+        featuresInfo: {
+          hasProjector: room.hasProjector,
+          hasWhiteboard: room.hasWhiteboard,
+          features: room.features,
+        },
         operationalHours: room.operationalHours,
-        status: room.status,
-        location: room.location,
-        description: room.description,
-        notes: room.notes || '',
       });
     }
   }, [room, form]);
@@ -80,15 +84,7 @@ export default function EditRoomPage({
   };
 
   const handleBasicNext = async () => {
-    const isValid =
-      (await form.trigger('name')) &&
-      (await form.trigger('roomNumber')) &&
-      (await form.trigger('building')) &&
-      (await form.trigger('capacity')) &&
-      (await form.trigger('roomType')) &&
-      (await form.trigger('status')) &&
-      (await form.trigger('location')) &&
-      (await form.trigger('description'));
+    const isValid = await form.trigger('basicInfo');
 
     if (isValid) {
       setActiveTab(RoomTab.Features);
@@ -96,10 +92,7 @@ export default function EditRoomPage({
   };
 
   const handleFeaturesNext = async () => {
-    const isValid =
-      (await form.trigger('hasProjector')) &&
-      (await form.trigger('hasWhiteboard')) &&
-      (await form.trigger('features'));
+    const isValid = await form.trigger('featuresInfo');
 
     if (isValid) {
       setActiveTab(RoomTab.Schedule);
@@ -115,15 +108,21 @@ export default function EditRoomPage({
   };
 
   const onSubmit = async (data: RoomFormValues) => {
+    const { basicInfo, featuresInfo, operationalHours } = data;
+    const roomData = {
+      ...basicInfo,
+      ...featuresInfo,
+      operationalHours,
+    };
+
     try {
       await editRoomMutation.mutateAsync({
         id: id,
-        input: data,
+        input: roomData,
       });
-
       toast({
         title: 'Room updated successfully',
-        description: `${data.name} has been updated in the system.`,
+        description: `${basicInfo.name} has been updated in the system.`,
       });
 
       router.push(`/dashboard/rooms/${id}`);

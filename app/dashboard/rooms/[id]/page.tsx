@@ -40,6 +40,10 @@ import { useGetRoom } from '@/apis/rooms/get-room';
 import { useDeleteRoom } from '@/apis/rooms/delete';
 import { RoomStatus } from '@/apis/rooms/type';
 import { useToast } from '@/hooks/use-toast';
+import {
+  roomTypeOptions,
+  statusOptions,
+} from '@/components/rooms/create/basic-info-tab';
 
 export default function RoomDetailPage({
   params,
@@ -209,7 +213,11 @@ export default function RoomDetailPage({
                 <div>
                   <h4 className='font-medium'>Room Type</h4>
                   <p className='text-muted-foreground'>
-                    {room.roomType.replace('_', ' ')}
+                    {
+                      roomTypeOptions.find(
+                        (option) => option.value === room.roomType
+                      )?.label
+                    }
                   </p>
                 </div>
               </div>
@@ -218,7 +226,10 @@ export default function RoomDetailPage({
             <div className='flex flex-col items-baseline gap-2'>
               <h4 className='font-medium'>Status</h4>
               <Badge variant={getStatusBadgeVariant(room.status)}>
-                {room.status}
+                {
+                  statusOptions.find((option) => option.value === room.status)
+                    ?.label
+                }
               </Badge>
             </div>
 
