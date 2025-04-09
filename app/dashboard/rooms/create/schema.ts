@@ -40,7 +40,11 @@ const timeSlotSchema = z
   })
   .refine(
     (data) => {
-      return data.start < data.end;
+      const toMinutes = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+      };
+      return toMinutes(data.start) < toMinutes(data.end);
     },
     {
       message: 'End time must be after start time',

@@ -6,6 +6,6 @@ export const TEACHERS_KEYS = {
   listTeachers: (filter: FilterCommon) => [
     TEACHERS_KEYS.teacher(),
     'listTeachers',
-    { ...filter },
+    filter,
   ],
 };
