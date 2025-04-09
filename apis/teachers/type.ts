@@ -1,3 +1,4 @@
+import { DepartmentResponse } from '@/apis/departments/type';
 import type { UserResponse } from '@/apis/users/type';
 import { formSchema } from '@/app/dashboard/teachers/create/schema';
 import type { Gender } from '@/types/profile';
@@ -14,6 +15,7 @@ export interface TeacherResponse {
   contactNumber: string;
   email: string;
   departmentId: string;
+  departments: DepartmentResponse[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

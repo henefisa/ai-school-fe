@@ -1,4 +1,6 @@
 'use client';
+
+import { use, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
@@ -29,7 +31,6 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { getError } from '@/utils/getError';
-import { CourseStatus } from '@/apis/courses/type';
 import {
   Select,
   SelectContent,
@@ -37,8 +38,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { formSchema } from '@/app/dashboard/courses/create/page';
+import { useGetCourse } from '@/apis/courses/get-course';
+import { useEditCourse } from '@/apis/courses/edit';
 import { useListDepartments } from '@/apis/departments/list-departments';
-import { useCreateCourse } from '@/apis/courses/create';
+import { CourseStatus } from '@/apis/courses/type';
 import {
   Popover,
   PopoverContent,
@@ -54,24 +58,23 @@ import {
 } from '@/components/ui/command';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-
-export const formSchema = z.object({
-  name: z.string().min(1, 'Course name is required'),
-  code: z.string().min(1, 'Course code is required'),
-  description: z.string().min(1, 'Description is required'),
-  credits: z.coerce.number().min(1, 'Credits must be at least 1'),
-  required: z.boolean().default(false),
-  departmentId: z.string().min(1, 'Department is required'),
-  status: z.nativeEnum(CourseStatus),
-});
+import { COURSES_KEYS } from '@/apis/courses/keys';
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function CreateCoursePage() {
+export default function EditCoursePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
   const router = useRouter();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const createCourseMutation = useCreateCourse();
+  const { data: course, isLoading } = useGetCourse(id);
+  const editCourseMutation = useEditCourse({
+    queryKey: COURSES_KEYS.getCourse(id),
+  });
   const { data: departmentsData } = useListDepartments({
     page: 1,
     pageSize: 50,
@@ -92,36 +95,87 @@ export default function CreateCoursePage() {
     },
   });
 
+  useEffect(() => {
+    if (course) {
+      form.reset({
+        name: course.name,
+        code: course.code,
+        description: course.description,
+        credits: course.credits,
+        required: course.required,
+        departmentId: course.departmentId,
+        status: course.status,
+      });
+    }
+  }, [course, form]);
+
   const onSubmit = async (values: FormValues) => {
     try {
-      await createCourseMutation.mutateAsync(values);
-
-      toast({
-        title: 'Course created',
-        description: `${values.name} has been created successfully.`,
+      await editCourseMutation.mutateAsync({
+        id: id,
+        input: values,
       });
 
-      router.push('/dashboard/courses');
+      toast({
+        title: 'Course updated',
+        description: `${values.name} has been updated successfully.`,
+      });
+
+      router.push(`/dashboard/courses/${id}`);
     } catch (error) {
       toast({
-        title: 'Failed to create course',
+        title: 'Failed to update course',
         description:
           getError(error) ??
-          'There was an error creating the course. Please try again.',
+          'There was an error updating the course. Please try again.',
         variant: 'destructive',
       });
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className='container mx-auto py-6'>
+        <div className='flex items-center justify-center h-[60vh]'>
+          <Loader2 className='h-8 w-8 animate-spin text-primary' />
+        </div>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className='container mx-auto py-6'>
+        <Card>
+          <CardHeader>
+            <CardTitle>Course Not Found</CardTitle>
+            <CardDescription>
+              The course record you are trying to edit does not exist or has
+              been deleted.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button asChild>
+              <Link href='/dashboard/courses'>
+                <ArrowLeft className='mr-2 h-4 w-4' />
+                Back to Courses
+              </Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className='container mx-auto py-6'>
       <div className='flex items-center gap-2 mb-6'>
         <Button variant='outline' size='icon' asChild>
-          <Link href='/dashboard/courses'>
+          <Link href={`/dashboard/courses/${id}`}>
             <ArrowLeft className='h-4 w-4' />
           </Link>
         </Button>
-        <h1 className='text-3xl font-bold tracking-tight'>Create Course</h1>
+        <h1 className='text-3xl font-bold tracking-tight'>Edit Course</h1>
       </div>
 
       <Card>
@@ -130,8 +184,8 @@ export default function CreateCoursePage() {
             <CardHeader>
               <CardTitle>Course Information</CardTitle>
               <CardDescription>
-                Enter the details for the new course. All fields marked with *
-                are required.
+                Update the details for this course. All fields marked with * are
+                required.
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
@@ -192,7 +246,7 @@ export default function CreateCoursePage() {
                       <FormLabel>Status</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -276,6 +330,23 @@ export default function CreateCoursePage() {
 
               <FormField
                 control={form.control}
+                name='description'
+                render={({ field }) => (
+                  <FormItem className='space-y-2'>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder='Enter a description of the course'
+                        rows={4}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name='required'
                 render={({ field }) => (
                   <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
@@ -296,37 +367,19 @@ export default function CreateCoursePage() {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name='description'
-                render={({ field }) => (
-                  <FormItem className='space-y-2'>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder='Enter a description of the course'
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </CardContent>
             <CardFooter className='flex justify-between'>
               <Button variant='outline' asChild>
-                <Link href='/dashboard/courses'>Cancel</Link>
+                <Link href={`/dashboard/courses/${id}`}>Cancel</Link>
               </Button>
-              <Button type='submit' disabled={createCourseMutation.isPending}>
-                {createCourseMutation.isPending ? (
+              <Button type='submit' disabled={editCourseMutation.isPending}>
+                {editCourseMutation.isPending ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Creating...
+                    Saving...
                   </>
                 ) : (
-                  'Create Course'
+                  'Save Changes'
                 )}
               </Button>
             </CardFooter>

@@ -6,7 +6,7 @@ import {
   StudentStatusFilter,
   useListStudents,
 } from '@/apis/students/list-students';
-import { FilterStudent, StudentInfo } from '@/apis/students/type';
+import { StudentInfo } from '@/apis/students/type';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -69,7 +69,7 @@ export default function StudentsPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const filter: FilterStudent = {
+  const filter = {
     page: currentPage,
     pageSize,
     q: debouncedSearchQuery,

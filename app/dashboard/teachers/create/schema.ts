@@ -28,8 +28,7 @@ export const formSchema = z.object({
       .optional(),
   }),
   contact: z.object({
-    addressLine1: z.string().min(1, 'Address is required'),
-    addressLine2: z.string().optional(),
+    street: z.string().min(1, 'Street is required'),
     city: z.string().min(1, 'City is required'),
     state: z.string().min(1, 'State/Province is required'),
     zipCode: z.string().min(1, 'Postal/Zip code is required'),

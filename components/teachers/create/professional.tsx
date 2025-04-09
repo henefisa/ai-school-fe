@@ -28,10 +28,27 @@ import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { formSchema } from '@/app/dashboard/teachers/create/schema';
 import { SingleDatePicker } from '@/components/date-picker/single-date-picker';
-import { Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { EmploymentType } from '@/types/employment-type';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { DepartmentResponse } from '@/apis/departments/type';
 
 interface ProfessionalProps {
+  listDepartments: DepartmentResponse[];
   isEdit?: boolean;
   form: UseFormReturn<z.infer<typeof formSchema>>;
   isSubmitting: boolean;
@@ -39,11 +56,14 @@ interface ProfessionalProps {
 }
 
 export function Professional({
+  listDepartments,
   isEdit,
   form,
   isSubmitting,
   handlePrevious,
 }: ProfessionalProps) {
+  const [open, setOpen] = useState(false);
+
   return (
     <Card>
       <CardHeader>
@@ -60,21 +80,55 @@ export function Professional({
             render={({ field }) => (
               <FormItem className='space-y-2'>
                 <FormLabel>Department</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Select department' />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value='9dd49ced-98fd-4c2b-9440-63d2b0bf681c'>
-                      Mathematics
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant='outline'
+                        role='combobox'
+                        aria-expanded={open}
+                        className='w-full justify-between'
+                      >
+                        {field.value
+                          ? listDepartments.find(
+                              (department) => department.id === field.value
+                            )?.name
+                          : 'Select department'}
+                        <ChevronsUpDown className='opacity-50' />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-full p-0'>
+                      <Command>
+                        <CommandInput placeholder='Search department' />
+                        <CommandList>
+                          <CommandEmpty>No department found.</CommandEmpty>
+                          <CommandGroup>
+                            {listDepartments.map((department) => (
+                              <CommandItem
+                                key={department.id}
+                                value={department.id}
+                                onSelect={(currentValue) => {
+                                  field.onChange(currentValue);
+                                  setOpen(false);
+                                }}
+                              >
+                                {department.name}
+                                <Check
+                                  className={cn(
+                                    'ml-auto',
+                                    field.value === department.id
+                                      ? 'opacity-100'
+                                      : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

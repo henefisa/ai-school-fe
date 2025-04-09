@@ -9,7 +9,12 @@ export const useGetTeacher = (id?: string) => {
   return useQuery({
     queryKey: TEACHERS_KEYS.getTeacher(id),
     queryFn: async () => {
-      const { data } = await instance.get<TeacherInfo>(`${URL}/${id}`);
+      const { data } = await instance.get<TeacherInfo>(`${URL}/${id}`, {
+        params: {
+          includeDepartments: true,
+          includeUser: true,
+        },
+      });
 
       return data;
     },
