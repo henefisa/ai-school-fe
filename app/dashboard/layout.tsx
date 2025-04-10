@@ -17,10 +17,6 @@ export default function DashboardLayout({
 }) {
   const role = useStoreContext((state) => state.userRole.role);
 
-  if (!role) {
-    return null;
-  }
-
   return (
     <div className='flex min-h-screen flex-col'>
       <header className='sticky top-0 z-40 border-b bg-background'>
@@ -34,7 +30,7 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='w-72 p-0'>
-                <DashboardSidebar role={Role.Admin} />
+                <DashboardSidebar role={(role ?? Role.Admin) as Role} />
               </SheetContent>
             </Sheet>
             <span className='text-lg font-bold'>EduManage</span>
