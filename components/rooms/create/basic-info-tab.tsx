@@ -7,7 +7,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   FormControl,
@@ -41,7 +40,6 @@ import { useState } from 'react';
 
 interface BasicInfoTabProps {
   form: UseFormReturn<RoomFormValues>;
-  handleNext: () => void;
   isEdit?: boolean;
 }
 
@@ -59,11 +57,7 @@ export const roomTypeOptions = [
   { value: RoomType.OTHER, label: 'Other' },
 ];
 
-export function BasicInfoTab({
-  form,
-  handleNext,
-  isEdit = false,
-}: BasicInfoTabProps) {
+export function BasicInfoTab({ form, isEdit = false }: BasicInfoTabProps) {
   const [openStatus, setOpenStatus] = useState(false);
   const [openRoomType, setOpenRoomType] = useState(false);
 
@@ -326,11 +320,6 @@ export function BasicInfoTab({
           )}
         />
       </CardContent>
-      <CardFooter className='flex justify-end'>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

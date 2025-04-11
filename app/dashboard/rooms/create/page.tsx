@@ -1,13 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { ArrowLeft } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useCreateRoom } from '@/apis/rooms/create';
 import { getError } from '@/utils/getError';
 import { roomFormSchema, type RoomFormValues } from './schema';
@@ -18,56 +16,15 @@ import { ScheduleTab } from '@/components/rooms/create/schedule-tab';
 import { useToast } from '@/hooks/use-toast';
 import { RoomPayload } from '@/apis/rooms/type';
 
-export enum RoomTab {
-  Basic = 'basic',
-  Features = 'features',
-  Schedule = 'schedule',
-}
-
 export default function CreateRoomPage() {
   const { toast } = useToast();
   const router = useRouter();
   const createRoomMutation = useCreateRoom();
-  const [activeTab, setActiveTab] = useState<RoomTab>(RoomTab.Basic);
 
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomFormSchema),
     defaultValues: defaultFormValues,
   });
-
-  const handleTabChange = (value: string) => {
-    if (
-      (activeTab === RoomTab.Features && value === RoomTab.Basic) ||
-      (activeTab === RoomTab.Schedule &&
-        (value === RoomTab.Basic || value === RoomTab.Features))
-    ) {
-      setActiveTab(value as RoomTab);
-    }
-  };
-
-  const handleBasicNext = async () => {
-    const isValid = await form.trigger('basicInfo');
-
-    if (isValid) {
-      setActiveTab(RoomTab.Features);
-    }
-  };
-
-  const handleFeaturesNext = async () => {
-    const isValid = await form.trigger('featuresInfo');
-
-    if (isValid) {
-      setActiveTab(RoomTab.Schedule);
-    }
-  };
-
-  const handleFeaturesPrevious = () => {
-    setActiveTab(RoomTab.Basic);
-  };
-
-  const handleSchedulePrevious = () => {
-    setActiveTab(RoomTab.Features);
-  };
 
   const onSubmit = async (data: RoomFormValues) => {
     try {
@@ -120,45 +77,23 @@ export default function CreateRoomPage() {
         </Button>
         <h1 className='text-3xl font-bold tracking-tight'>Create New Room</h1>
       </div>
-
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-          <Tabs
-            value={activeTab}
-            onValueChange={handleTabChange}
-            className='w-full'
-          >
-            <TabsList className='grid w-full grid-cols-3'>
-              <TabsTrigger value={RoomTab.Basic}>Basic Information</TabsTrigger>
-              <TabsTrigger value={RoomTab.Features}>
-                Features & Equipment
-              </TabsTrigger>
-              <TabsTrigger value={RoomTab.Schedule}>
-                Operational Hours
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={RoomTab.Basic} className='space-y-4 pt-4'>
-              <BasicInfoTab form={form} handleNext={handleBasicNext} />
-            </TabsContent>
-
-            <TabsContent value={RoomTab.Features} className='space-y-4 pt-4'>
-              <FeaturesTab
-                form={form}
-                handleNext={handleFeaturesNext}
-                handlePrevious={handleFeaturesPrevious}
-              />
-            </TabsContent>
-
-            <TabsContent value={RoomTab.Schedule} className='space-y-4 pt-4'>
-              <ScheduleTab
-                form={form}
-                handlePrevious={handleSchedulePrevious}
-                handleSubmit={handleSubmitForm}
-                isSubmitting={createRoomMutation.isPending}
-              />
-            </TabsContent>
-          </Tabs>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <BasicInfoTab form={form} isEdit={false} />
+          <FeaturesTab form={form} />
+          <ScheduleTab form={form} />
+          <div className='flex justify-end'>
+            <Button type='submit' disabled={createRoomMutation.isPending}>
+              {createRoomMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Creating...
+                </>
+              ) : (
+                'Create Room'
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

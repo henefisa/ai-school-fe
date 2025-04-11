@@ -8,7 +8,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   FormControl,
@@ -25,17 +24,9 @@ import type { RoomFormValues } from '@/app/dashboard/rooms/create/schema';
 
 interface FeaturesTabProps {
   form: UseFormReturn<RoomFormValues>;
-  handleNext: () => void;
-  handlePrevious: () => void;
-  isEdit?: boolean;
 }
 
-export function FeaturesTab({
-  form,
-  handleNext,
-  handlePrevious,
-  isEdit = false,
-}: FeaturesTabProps) {
+export function FeaturesTab({ form }: FeaturesTabProps) {
   const [newFeature, setNewFeature] = useState('');
 
   const addFeature = () => {
@@ -153,14 +144,6 @@ export function FeaturesTab({
           </div>
         </div>
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' onClick={handlePrevious}>
-          Previous
-        </Button>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

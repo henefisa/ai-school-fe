@@ -8,7 +8,6 @@ import { Personal } from '@/components/teachers/create/personal';
 import { Contact } from '@/components/teachers/create/contact';
 import { Professional } from '@/components/teachers/create/professional';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { Gender } from '@/types/profile';
@@ -21,10 +20,7 @@ import { useGetTeacher } from '@/apis/teachers/get-teacher';
 import { useEditTeacher } from '@/apis/teachers/edit';
 import { EmploymentType } from '@/types/employment-type';
 import { TitleType } from '@/types/title';
-import {
-  defaultValues,
-  TeacherTab,
-} from '@/app/dashboard/teachers/create/page';
+import { defaultValues } from '@/app/dashboard/teachers/create/page';
 import { TEACHERS_KEYS } from '@/apis/teachers/keys';
 import { useListDepartments } from '@/apis/departments/list-departments';
 
@@ -37,8 +33,6 @@ export default function EditTeacherPage({
 
   const router = useRouter();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState(TeacherTab.Personal);
-
   const { data: teacher, isLoading } = useGetTeacher(id);
   const editTeacherMutation = useEditTeacher({
     queryKey: TEACHERS_KEYS.getTeacher(id),
@@ -137,58 +131,25 @@ export default function EditTeacherPage({
         </div>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Tabs
-            value={activeTab}
-            onValueChange={(tab) => setActiveTab(tab as TeacherTab)}
-            className='space-y-4'
-          >
-            <TabsList>
-              <TabsTrigger value={TeacherTab.Personal}>
-                Personal Information
-              </TabsTrigger>
-              <TabsTrigger value={TeacherTab.Contact}>
-                Contact Information
-              </TabsTrigger>
-              <TabsTrigger value={TeacherTab.Professional}>
-                Professional Information
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value={TeacherTab.Personal} className='space-y-4'>
-              <Personal
-                form={form}
-                handleNext={async () => {
-                  const isValid = await form.trigger('personal');
-
-                  if (isValid) {
-                    setActiveTab(TeacherTab.Contact);
-                  }
-                }}
-              />
-            </TabsContent>
-            <TabsContent value={TeacherTab.Contact} className='space-y-4'>
-              <Contact
-                form={form}
-                handleNext={async () => {
-                  const isValid = await form.trigger('contact');
-
-                  if (isValid) {
-                    setActiveTab(TeacherTab.Professional);
-                  }
-                }}
-                handlePrevious={() => setActiveTab(TeacherTab.Personal)}
-              />
-            </TabsContent>
-            <TabsContent value={TeacherTab.Professional} className='space-y-4'>
-              <Professional
-                form={form}
-                isEdit
-                handlePrevious={() => setActiveTab(TeacherTab.Contact)}
-                isSubmitting={editTeacherMutation.isPending}
-                listDepartments={listDepartments?.results ?? []}
-              />
-            </TabsContent>
-          </Tabs>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <Personal form={form} />
+          <Contact form={form} />
+          <Professional
+            form={form}
+            listDepartments={listDepartments?.results ?? []}
+          />
+          <div className='flex justify-end'>
+            <Button type='submit' disabled={editTeacherMutation.isPending}>
+              {editTeacherMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Saving...
+                </>
+              ) : (
+                'Save Teacher'
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

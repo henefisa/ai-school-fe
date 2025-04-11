@@ -1,11 +1,9 @@
 import { formSchema } from '@/app/dashboard/students/create/schema';
 import { SingleDatePicker } from '@/components/date-picker/single-date-picker';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -30,15 +28,9 @@ import { z } from 'zod';
 
 interface AcademicProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  handleNext?: () => void;
-  handlePrevious: () => void;
 }
 
-export const Academic: React.FC<AcademicProps> = ({
-  form,
-  handleNext,
-  handlePrevious,
-}) => {
+export const Academic: React.FC<AcademicProps> = ({ form }) => {
   return (
     <Card>
       <CardHeader>
@@ -78,32 +70,6 @@ export const Academic: React.FC<AcademicProps> = ({
           />
           <FormField
             control={form.control}
-            name='academic.enrollmentDate'
-            render={({ field }) => (
-              <SingleDatePicker field={field} label='Enrollment Date' />
-            )}
-          />
-        </div>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-          <FormField
-            control={form.control}
-            name='academic.previousSchool'
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Previous School (Optional)</FormLabel>
-                <FormControl>
-                  <Input
-                    type='text'
-                    placeholder='Enter previous school name'
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name='academic.academicYear'
             render={({ field }) => (
               <FormItem>
@@ -127,29 +93,51 @@ export const Academic: React.FC<AcademicProps> = ({
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name='academic.additionalNotes'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Additional Notes (Optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder='Enter any additional academic information'
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='academic.previousSchool'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Previous School (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type='text'
+                    placeholder='Enter previous school name'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name='academic.additionalNotes'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Additional Notes (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder='Enter any additional academic information'
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+          <FormField
+            control={form.control}
+            name='academic.enrollmentDate'
+            render={({ field }) => (
+              <SingleDatePicker field={field} label='Enrollment Date' />
+            )}
+          />
+        </div>
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' onClick={handlePrevious}>
-          Previous
-        </Button>
-        <Button type='submit'>Create Student</Button>
-      </CardFooter>
     </Card>
   );
 };

@@ -1,6 +1,6 @@
 import { getEndpoint } from '@/apis/instance';
 
-export const getFUrl = (pathOrUrl: string) => {
+export const getUrl = (pathOrUrl: string) => {
   if (!pathOrUrl) return '';
 
   if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {

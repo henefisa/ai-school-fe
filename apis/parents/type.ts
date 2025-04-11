@@ -12,11 +12,13 @@ export interface ParentPayload {
     firstName: string;
     lastName: string;
     occupation: string;
+    username: string;
+    password: string;
   };
   contact: {
     email: string;
     phoneNumber: string;
-    address: string;
+    street: string;
     city: string;
     state: string;
     zipCode: string;
@@ -76,6 +78,7 @@ export interface ParentInfo {
   email: string;
   occupation: string;
   notes: string;
+  emergencyContacts: EmergencyContactResponse[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
