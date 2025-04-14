@@ -22,23 +22,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { UseFormReturn } from 'react-hook-form';
 import type { RoomFormValues } from '@/app/dashboard/rooms/create/schema';
 import type { OperationalHours } from '@/apis/rooms/type';
-import { CardFooter } from '@/components/ui/card';
 
 interface ScheduleTabProps {
   form: UseFormReturn<RoomFormValues>;
-  handlePrevious: () => void;
-  handleSubmit: () => void;
-  isSubmitting?: boolean;
-  isEdit?: boolean;
 }
 
-export function ScheduleTab({
-  form,
-  handlePrevious,
-  handleSubmit,
-  isSubmitting = false,
-  isEdit = false,
-}: ScheduleTabProps) {
+export function ScheduleTab({ form }: ScheduleTabProps) {
   const addTimeSlot = (day: keyof OperationalHours) => {
     const currentHours = form.getValues('operationalHours');
     const daySlots = [...(currentHours[day] || [])];
@@ -234,41 +223,6 @@ export function ScheduleTab({
           </div>
         ))}
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' onClick={handlePrevious}>
-          Previous
-        </Button>
-        <Button type='button' onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <svg
-                className='mr-2 h-4 w-4 animate-spin'
-                fill='none'
-                viewBox='0 0 24 24'
-              >
-                <circle
-                  className='opacity-25'
-                  cx='12'
-                  cy='12'
-                  r='10'
-                  stroke='currentColor'
-                  strokeWidth='4'
-                ></circle>
-                <path
-                  className='opacity-75'
-                  fill='currentColor'
-                  d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                ></path>
-              </svg>
-              {isEdit ? 'Saving...' : 'Creating...'}
-            </>
-          ) : isEdit ? (
-            'Save Changes'
-          ) : (
-            'Create Room'
-          )}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

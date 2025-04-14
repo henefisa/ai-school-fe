@@ -1,10 +1,8 @@
 import { formSchema } from '@/app/dashboard/students/create/schema';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -22,15 +20,9 @@ import { z } from 'zod';
 
 interface ContactProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  handleNext: () => void;
-  handlePrevious: () => void;
 }
 
-export const Contact: React.FC<ContactProps> = ({
-  form,
-  handleNext,
-  handlePrevious,
-}) => {
+export const Contact: React.FC<ContactProps> = ({ form }) => {
   return (
     <Card>
       <CardHeader>
@@ -152,14 +144,6 @@ export const Contact: React.FC<ContactProps> = ({
           />
         </div>
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' onClick={handlePrevious}>
-          Previous
-        </Button>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

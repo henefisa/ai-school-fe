@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -28,7 +27,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { formSchema } from '@/app/dashboard/teachers/create/schema';
 import { SingleDatePicker } from '@/components/date-picker/single-date-picker';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { EmploymentType } from '@/types/employment-type';
 import {
   Popover,
@@ -49,19 +48,10 @@ import { DepartmentResponse } from '@/apis/departments/type';
 
 interface ProfessionalProps {
   listDepartments: DepartmentResponse[];
-  isEdit?: boolean;
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  isSubmitting: boolean;
-  handlePrevious: () => void;
 }
 
-export function Professional({
-  listDepartments,
-  isEdit,
-  form,
-  isSubmitting,
-  handlePrevious,
-}: ProfessionalProps) {
+export function Professional({ listDepartments, form }: ProfessionalProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -265,23 +255,6 @@ export function Professional({
           )}
         />
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' onClick={handlePrevious}>
-          Previous
-        </Button>
-        <Button type='submit' disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-              Creating...
-            </>
-          ) : isEdit ? (
-            'Edit Teacher'
-          ) : (
-            'Create Teacher'
-          )}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

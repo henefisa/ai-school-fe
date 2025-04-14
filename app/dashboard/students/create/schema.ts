@@ -71,6 +71,6 @@ export const formSchema = z.object({
   contact: contactSchema,
   academic: academicSchema,
   parent: z.object({
-    parentId: z.string().optional(),
+    parentId: z.string().min(1, 'Parent is required'),
   }),
 });

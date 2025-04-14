@@ -40,39 +40,17 @@ import { useGetParent } from '@/apis/parents/get-parent';
 import { useEditParent } from '@/apis/parents/edit';
 import { getError } from '@/utils/getError';
 import { PARENTS_KEYS } from '@/apis/parents/keys';
-
-const formSchema = z.object({
-  personal: z.object({
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
-    occupation: z.string().optional(),
-  }),
-  contact: z.object({
-    email: z.string().email('Invalid email address'),
-    phoneNumber: z.string().min(1, 'Phone number is required'),
-    address: z.string().min(1, 'Address is required'),
-    city: z.string().min(1, 'City is required'),
-    state: z.string().min(1, 'State is required'),
-    zipCode: z.string().min(1, 'Zip code is required'),
-    country: z.string().min(1, 'Country is required'),
-  }),
-  emergencyContacts: z
-    .array(
-      z.object({
-        name: z.string().min(1, 'Name is required'),
-        relationship: z.string().min(1, 'Relationship is required'),
-        phoneNumber: z.string().min(1, 'Phone number is required'),
-        email: z
-          .string()
-          .email('Invalid email address')
-          .optional()
-          .or(z.literal('')),
-      })
-    )
-    .min(1, 'At least one emergency contact is required'),
-  notes: z.string().optional(),
-  isActive: z.boolean().default(true),
-});
+import {
+  formSchema,
+  setParentPayload,
+} from '@/app/dashboard/parents/create/schema';
+import { defaultValues } from '@/app/dashboard/parents/create/defaultValues';
+import { ParentPayload } from '@/apis/parents/type';
+import { PersonalInfo } from '@/components/parents/create/personal';
+import { AddressInfo } from '@/components/parents/create/address';
+import { EmergencyContacts } from '@/components/parents/create/emergency-contacts';
+import { AdditionalInfo } from '@/components/parents/create/additional';
+import { AssociatedStudents } from '@/components/parents/create/associated-students';
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -91,32 +69,7 @@ export default function EditParentPage({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      personal: {
-        firstName: '',
-        lastName: '',
-        occupation: '',
-      },
-      contact: {
-        email: '',
-        phoneNumber: '',
-        address: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: 'us',
-      },
-      emergencyContacts: [
-        {
-          name: '',
-          relationship: '',
-          phoneNumber: '',
-          email: '',
-        },
-      ],
-      notes: '',
-      isActive: true,
-    },
+    defaultValues,
   });
 
   useEffect(() => {
@@ -136,9 +89,12 @@ export default function EditParentPage({
           zipCode: '',
           country: '',
         },
-        emergencyContacts: [
-          { name: '', relationship: '', phoneNumber: '', email: '' },
-        ],
+        emergencyContacts: parent.emergencyContacts.map((contact) => ({
+          name: contact.name,
+          relationship: contact.relationship,
+          phoneNumber: contact.phoneNumber,
+          email: contact.email || '',
+        })),
         notes: parent.notes || '',
         isActive: !parent.deletedAt,
       });
@@ -147,29 +103,7 @@ export default function EditParentPage({
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const parentData = {
-        personal: {
-          firstName: values.personal.firstName,
-          lastName: values.personal.lastName,
-          occupation: values.personal.occupation || '',
-        },
-        contact: {
-          email: values.contact.email,
-          phoneNumber: values.contact.phoneNumber,
-          address: values.contact.address,
-          city: values.contact.city,
-          state: values.contact.state,
-          zipCode: values.contact.zipCode,
-          country: values.contact.country,
-        },
-        emergencyContacts: values.emergencyContacts.map((contact) => ({
-          name: contact.name,
-          relationship: contact.relationship,
-          phoneNumber: contact.phoneNumber,
-          email: contact.email || '',
-        })),
-        notes: values.notes,
-      };
+      const parentData: ParentPayload = setParentPayload(values);
 
       await editParentMutation.mutateAsync({
         id: id,
@@ -193,24 +127,6 @@ export default function EditParentPage({
     }
   };
 
-  const addEmergencyContact = () => {
-    const currentContacts = form.getValues('emergencyContacts');
-    form.setValue('emergencyContacts', [
-      ...currentContacts,
-      { name: '', relationship: '', phoneNumber: '', email: '' },
-    ]);
-  };
-
-  const removeEmergencyContact = (index: number) => {
-    const currentContacts = form.getValues('emergencyContacts');
-    if (currentContacts.length > 1) {
-      form.setValue(
-        'emergencyContacts',
-        currentContacts.filter((_, i) => i !== index)
-      );
-    }
-  };
-
   if (isLoading) {
     return (
       <div className='flex h-[50vh] items-center justify-center'>
@@ -231,337 +147,21 @@ export default function EditParentPage({
       </div>
 
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className='grid grid-cols-1 gap-6'
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
-              <CardDescription>
-                Update the parent's personal details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <FormField
-                  control={form.control}
-                  name='personal.firstName'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='John' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='personal.lastName'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Smith' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='contact.email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          type='email'
-                          placeholder='john.smith@example.com'
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='contact.phoneNumber'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder='+1 (555) 123-4567' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='personal.occupation'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Occupation</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Software Engineer' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Address Information</CardTitle>
-              <CardDescription>
-                Update the parent's address details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='contact.address'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Street Address</FormLabel>
-                    <FormControl>
-                      <Input placeholder='123 Main St' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <FormField
-                  control={form.control}
-                  name='contact.city'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Anytown' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='contact.state'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State/Province</FormLabel>
-                      <FormControl>
-                        <Input placeholder='CA' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='contact.zipCode'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Zip/Postal Code</FormLabel>
-                      <FormControl>
-                        <Input placeholder='94321' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name='contact.country'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Country</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Select a country' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value='us'>United States</SelectItem>
-                        <SelectItem value='ca'>Canada</SelectItem>
-                        <SelectItem value='uk'>United Kingdom</SelectItem>
-                        <SelectItem value='au'>Australia</SelectItem>
-                        <SelectItem value='other'>Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Emergency Contacts</CardTitle>
-              <CardDescription>
-                Update emergency contacts for this parent
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {form.watch('emergencyContacts').map((_, index) => (
-                <div key={index} className='space-y-4'>
-                  {index > 0 && <Separator className='my-4' />}
-                  <div className='flex justify-between items-center'>
-                    <h3 className='text-lg font-medium'>Contact {index + 1}</h3>
-                    {form.watch('emergencyContacts').length > 1 && (
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => removeEmergencyContact(index)}
-                      >
-                        <Trash2 className='h-4 w-4 mr-1' />
-                        Remove
-                      </Button>
-                    )}
-                  </div>
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <FormField
-                      control={form.control}
-                      name={`emergencyContacts.${index}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder='Sarah Smith' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`emergencyContacts.${index}.relationship`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Relationship</FormLabel>
-                          <FormControl>
-                            <Input placeholder='Spouse' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`emergencyContacts.${index}.phoneNumber`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder='+1 (555) 987-6543' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`emergencyContacts.${index}.email`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address</FormLabel>
-                          <FormControl>
-                            <Input
-                              type='email'
-                              placeholder='sarah.smith@example.com'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              ))}
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={addEmergencyContact}
-                className='mt-2'
-              >
-                <Plus className='h-4 w-4 mr-1' />
-                Add Another Contact
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-              <CardDescription>
-                Update any additional notes or information about this parent
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <FormField
-                control={form.control}
-                name='notes'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder='Enter any additional information here...'
-                        className='min-h-[100px]'
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name='isActive'
-                render={({ field }) => (
-                  <FormItem className='flex flex-row items-center space-x-3 space-y-0 pt-2'>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel>Active Status</FormLabel>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <div className='flex justify-end gap-4'>
-            <Button variant='outline' asChild>
-              <Link href={`/dashboard/parents/${id}`}>Cancel</Link>
-            </Button>
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <PersonalInfo form={form} />
+          <AddressInfo form={form} />
+          <EmergencyContacts form={form} />
+          <AdditionalInfo form={form} />
+          <AssociatedStudents form={form} />
+          <div className='flex justify-end '>
             <Button type='submit' disabled={editParentMutation.isPending}>
               {editParentMutation.isPending ? (
                 <>
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Updating...
+                  Saving...
                 </>
               ) : (
-                'Update Parent'
+                'Saving Parent'
               )}
             </Button>
           </div>

@@ -25,10 +25,9 @@ import { z } from 'zod';
 
 interface PersonalProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  handleNext: () => void;
 }
 
-export const Personal: React.FC<PersonalProps> = ({ form, handleNext }) => {
+export const Personal: React.FC<PersonalProps> = ({ form }) => {
   return (
     <Card>
       <CardHeader>
@@ -204,14 +203,6 @@ export const Personal: React.FC<PersonalProps> = ({ form, handleNext }) => {
           )}
         />
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' disabled>
-          Previous
-        </Button>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

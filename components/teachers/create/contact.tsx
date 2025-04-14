@@ -1,11 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -24,11 +22,9 @@ import { formSchema } from '@/app/dashboard/teachers/create/schema';
 
 interface ContactProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  handleNext: () => Promise<void>;
-  handlePrevious: () => void;
 }
 
-export function Contact({ form, handleNext, handlePrevious }: ContactProps) {
+export function Contact({ form }: ContactProps) {
   return (
     <Card>
       <CardHeader>
@@ -173,14 +169,6 @@ export function Contact({ form, handleNext, handlePrevious }: ContactProps) {
           )}
         />
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' onClick={handlePrevious}>
-          Previous
-        </Button>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

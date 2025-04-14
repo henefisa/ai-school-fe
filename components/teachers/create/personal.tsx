@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -35,10 +34,9 @@ import { TitleType } from '@/types/title';
 
 interface PersonalProps {
   form: UseFormReturn<z.infer<typeof formSchema>>;
-  handleNext: () => Promise<void>;
 }
 
-export function Personal({ form, handleNext }: PersonalProps) {
+export function Personal({ form }: PersonalProps) {
   return (
     <Card>
       <CardHeader>
@@ -212,14 +210,6 @@ export function Personal({ form, handleNext }: PersonalProps) {
           />
         </div>
       </CardContent>
-      <CardFooter className='flex justify-between'>
-        <Button variant='outline' type='button' disabled>
-          Previous
-        </Button>
-        <Button type='button' onClick={handleNext}>
-          Next
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

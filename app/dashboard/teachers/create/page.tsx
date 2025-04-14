@@ -1,12 +1,10 @@
 'use client';
-import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Personal } from '@/components/teachers/create/personal';
 import { Contact } from '@/components/teachers/create/contact';
 import { Professional } from '@/components/teachers/create/professional';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { Gender } from '@/types/profile';
@@ -19,13 +17,6 @@ import { useCreateTeacher } from '@/apis/teachers/create';
 import { EmploymentType } from '@/types/employment-type';
 import { TitleType } from '@/types/title';
 import { useListDepartments } from '@/apis/departments/list-departments';
-
-export enum TeacherTab {
-  Personal = 'personal',
-  Contact = 'contact',
-  Professional = 'professional',
-  Classes = 'classes',
-}
 
 export const defaultValues: z.infer<typeof formSchema> = {
   personal: {
@@ -63,7 +54,6 @@ export const defaultValues: z.infer<typeof formSchema> = {
 export default function CreateTeacherPage() {
   const { toast } = useToast();
   const createTeacherMutation = useCreateTeacher();
-  const [activeTab, setActiveTab] = useState(TeacherTab.Personal);
 
   const { data } = useListDepartments({
     page: 1,
@@ -81,7 +71,6 @@ export default function CreateTeacherPage() {
     try {
       await createTeacherMutation.mutateAsync(values);
       form.reset(defaultValues);
-      setActiveTab(TeacherTab.Personal);
       toast({
         title: 'Teacher Creation Success 🎉',
         description: 'Teacher has been created successfully!',
@@ -109,60 +98,23 @@ export default function CreateTeacherPage() {
         </div>
       </div>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Tabs
-            value={activeTab}
-            onValueChange={(tab) => setActiveTab(tab as TeacherTab)}
-            className='space-y-4'
-          >
-            <TabsList>
-              <TabsTrigger value={TeacherTab.Personal}>
-                Personal Information
-              </TabsTrigger>
-              <TabsTrigger value={TeacherTab.Contact}>
-                Contact Information
-              </TabsTrigger>
-              <TabsTrigger value={TeacherTab.Professional}>
-                Professional Information
-              </TabsTrigger>
-              {/* <TabsTrigger value={TeacherTab.Classes}>
-                Classes & Schedule
-              </TabsTrigger> */}
-            </TabsList>
-            <TabsContent value={TeacherTab.Personal} className='space-y-4'>
-              <Personal
-                form={form}
-                handleNext={async () => {
-                  const isValid = await form.trigger('personal');
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <Personal form={form} />
+          <Contact form={form} />
+          <Professional listDepartments={data?.results ?? []} form={form} />
 
-                  if (isValid) {
-                    setActiveTab(TeacherTab.Contact);
-                  }
-                }}
-              />
-            </TabsContent>
-            <TabsContent value={TeacherTab.Contact} className='space-y-4'>
-              <Contact
-                form={form}
-                handleNext={async () => {
-                  const isValid = await form.trigger('contact');
-
-                  if (isValid) {
-                    setActiveTab(TeacherTab.Professional);
-                  }
-                }}
-                handlePrevious={() => setActiveTab(TeacherTab.Personal)}
-              />
-            </TabsContent>
-            <TabsContent value={TeacherTab.Professional} className='space-y-4'>
-              <Professional
-                listDepartments={data?.results ?? []}
-                form={form}
-                handlePrevious={() => setActiveTab(TeacherTab.Contact)}
-                isSubmitting={createTeacherMutation.isPending}
-              />
-            </TabsContent>
-          </Tabs>
+          <div className='flex justify-end'>
+            <Button type='submit' disabled={createTeacherMutation.isPending}>
+              {createTeacherMutation.isPending ? (
+                <>
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                  Creating...
+                </>
+              ) : (
+                'Create Teacher'
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>
