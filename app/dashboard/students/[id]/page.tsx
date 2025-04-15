@@ -27,6 +27,7 @@ import { DialogForm } from '@/app/dashboard/students/[id]/dialog-form';
 import { getError } from '@/utils/getError';
 import { Gender } from '@/types/profile';
 import { STUDENTS_KEYS } from '@/apis/students/keys';
+import { getAddress } from '@/utils/get-address';
 
 export enum StudentDetailTab {
   Courses = 'courses',
@@ -173,7 +174,7 @@ export default function StudentDetailPage({
                   <MapPin className='h-4 w-4 text-muted-foreground' />
                   <div className='grid grid-cols-1 gap-1 text-sm'>
                     <span className='text-muted-foreground'>Address:</span>
-                    <span>DN</span>
+                    <span>{getAddress(data.studentAddresses[0].address)}</span>
                   </div>
                 </div>
                 <div className='flex items-center gap-2'>
@@ -197,15 +198,15 @@ export default function StudentDetailPage({
                 <div className='space-y-2 text-sm'>
                   <div>
                     <span className='text-muted-foreground'>Name:</span>
-                    <span className='ml-2'>{data.parentId}</span>
+                    <span className='ml-2'>{getDisplayName(data.parent)}</span>
                   </div>
                   <div>
                     <span className='text-muted-foreground'>Email:</span>
-                    <span className='ml-2'>{data.parentId}</span>
+                    <span className='ml-2'>{data.parent.email}</span>
                   </div>
                   <div>
                     <span className='text-muted-foreground'>Phone:</span>
-                    <span className='ml-2'>{data.parentId}</span>
+                    <span className='ml-2'>{data.parent.contactNumber1}</span>
                   </div>
                 </div>
               </div>

@@ -43,6 +43,7 @@ import { useGetParentChildren } from '@/apis/parents/get-parent-children';
 import { useDeleteParent } from '@/apis/parents/delete';
 import { formatDate } from 'date-fns';
 import { getDisplayName } from '@/utils/get-display-name';
+import { getAddress } from '@/utils/get-address';
 
 export default function ParentDetailPage({
   params,
@@ -246,7 +247,9 @@ export default function ParentDetailPage({
                   <MapPin className='h-4 w-4 mt-0.5 text-muted-foreground' />
                   <div className='flex-1'>
                     <p className='text-sm font-medium'>Address</p>
-                    <p className='text-sm text-muted-foreground'>DN</p>
+                    <p className='text-sm text-muted-foreground'>
+                      {getAddress(parent.parentAddresses[0].address)}
+                    </p>
                   </div>
                 </div>
                 <div className='flex items-start gap-2'>

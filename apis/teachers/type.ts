@@ -1,4 +1,5 @@
 import { DepartmentResponse } from '@/apis/departments/type';
+import { Address } from '@/apis/students/type';
 import type { UserResponse } from '@/apis/users/type';
 import { formSchema } from '@/app/dashboard/teachers/create/schema';
 import type { Gender } from '@/types/profile';
@@ -21,6 +22,17 @@ export interface TeacherResponse {
   deletedAt: string | null;
 }
 
+export interface TeacherAddress {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  teacherId: string;
+  addressId: string;
+  addressType: string;
+  address: Address;
+}
+
 export interface EditTeacherParams {
   id: string;
   input: Partial<z.infer<typeof formSchema>>;
@@ -28,4 +40,8 @@ export interface EditTeacherParams {
 
 export interface TeacherInfo extends TeacherResponse {
   user: UserResponse;
+}
+
+export interface TeacherDetail extends TeacherInfo {
+  teacherAddresses: TeacherAddress[];
 }

@@ -226,7 +226,13 @@ export function DashboardSidebar({
   const navItems = getNavItems();
 
   return (
-    <div className={cn('h-full', className)} {...props}>
+    <div
+      className={cn(
+        'fixed left-0 top-14 z-30 h-screen w-64 border-r bg-background',
+        className
+      )}
+      {...props}
+    >
       <div className='flex h-full flex-col'>
         <div className='flex h-14 items-center border-b px-4'>
           <Link href='/dashboard' className='flex items-center gap-2'>

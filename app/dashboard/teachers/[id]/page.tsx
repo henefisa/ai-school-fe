@@ -35,6 +35,7 @@ import {
 import { useGetTeacher } from '@/apis/teachers/get-teacher';
 import { getDisplayName } from '@/utils/get-display-name';
 import { format } from 'date-fns';
+import { getAddress } from '@/utils/get-address';
 
 export default function TeacherDetailPage({
   params,
@@ -42,6 +43,7 @@ export default function TeacherDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+
   const { data } = useGetTeacher(id);
 
   // Sample classes data
@@ -269,7 +271,7 @@ export default function TeacherDetailPage({
                   <MapPin className='h-4 w-4 text-muted-foreground' />
                   <div className='grid grid-cols-1 gap-1 text-sm'>
                     <span className='text-muted-foreground'>Address:</span>
-                    <span>DN</span>
+                    <span>{getAddress(data.teacherAddresses[0].address)}</span>
                   </div>
                 </div>
                 <div className='flex items-center gap-2'>
