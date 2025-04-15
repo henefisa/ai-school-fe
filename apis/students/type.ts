@@ -1,3 +1,4 @@
+import { ParentInfo } from '@/apis/parents/type';
 import { UserResponse } from '@/apis/users/type';
 import { Gender } from '@/types/profile';
 
@@ -28,6 +29,34 @@ export interface EditStudentParams {
   input: StudentPayload;
 }
 
+export interface Address {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+export interface StudentAddress {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  studentId: string;
+  addressId: string;
+  addressType: string;
+  address: Address;
+}
+
 export interface StudentInfo extends StudentResponse {
   user: UserResponse;
+}
+
+export interface StudentDetail extends StudentInfo {
+  parent: Omit<ParentInfo, 'user' | 'emergencyContacts'>;
+  studentAddresses: StudentAddress[];
 }

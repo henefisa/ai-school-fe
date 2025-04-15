@@ -182,7 +182,7 @@ export default function CourseDetailPage({
                 <div>
                   <h4 className='font-medium'>Department</h4>
                   <p className='text-muted-foreground'>
-                    {course.department.name}
+                    {course.department?.name}
                   </p>
                 </div>
               </div>

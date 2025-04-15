@@ -1,3 +1,4 @@
+import { Address } from '@/apis/students/type';
 import type { UserResponse } from '@/apis/users/type';
 
 export interface EmergencyContactPayload {
@@ -68,6 +69,17 @@ export interface EditParentParams {
   input: Partial<ParentPayload>;
 }
 
+export interface ParentAddresses {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  parentId: string;
+  addressId: string;
+  addressType: string;
+  address: Address;
+}
+
 export interface ParentInfo {
   id: string;
   firstName: string;
@@ -79,6 +91,7 @@ export interface ParentInfo {
   occupation: string;
   notes: string;
   emergencyContacts: EmergencyContactResponse[];
+  parentAddresses: ParentAddresses[];
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

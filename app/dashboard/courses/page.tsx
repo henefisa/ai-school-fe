@@ -239,7 +239,7 @@ export default function CoursesPage() {
                           </TableCell>
                           <TableCell>{course.code}</TableCell>
                           <TableCell>{course.credits}</TableCell>
-                          <TableCell>{course.department.name}</TableCell>
+                          <TableCell>{course.department?.name}</TableCell>
                           <TableCell>
                             {course.required ? 'Yes' : 'No'}
                           </TableCell>
