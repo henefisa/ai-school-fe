@@ -59,18 +59,8 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
 import { AddressType } from '@/types/address';
-import {
-  useDeleteMutation,
-  useInsertMutation,
-  useQuery,
-  useUpdateMutation,
-} from '@supabase-cache-helpers/postgrest-react-query';
-import { createClient } from '@/utils/supabase/client';
-import { getAddressesByProfileId } from '@/queries/address/get-addresses-by-profile-id';
 import { Skeleton } from '../ui/skeleton';
 import { useDisclosure } from '@/hooks/use-disclosure';
-import { Tables } from '@/utils/supabase/database.types';
-import { useAuth } from '@/hooks/use-auth';
 
 const addressFormSchema = z.object({
   name: z.string().min(1, 'Address name is required.'),
@@ -88,23 +78,7 @@ const addressFormSchema = z.object({
 type AddressFormValues = z.infer<typeof addressFormSchema>;
 
 export default function AddressManagement() {
-  const { user } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [currentAddress, setCurrentAddress] =
-    useState<Tables<'addresses'> | null>(null);
-  const client = createClient();
-  const { mutateAsync: createAddress, isPending: isPendingCreate } =
-    useInsertMutation(client.from('addresses'), ['id'], '*');
-  const { mutateAsync: updateAddress, isPending: isPendingUpdate } =
-    useUpdateMutation(client.from('addresses'), ['id'], '*');
-  const { mutateAsync: deleteAddress, isPending: isPendingDelete } =
-    useDeleteMutation(client.from('addresses'), ['id']);
-  const { data: addresses, isLoading } = useQuery(
-    getAddressesByProfileId(client, user?.id ?? ''),
-    {
-      enabled: !!user?.id,
-    }
-  );
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
@@ -120,22 +94,22 @@ export default function AddressManagement() {
   });
 
   const handleAddAddress = async (values: AddressFormValues) => {
-    if (!user) {
-      return;
-    }
+    // if (!user) {
+    //   return;
+    // }
 
-    await createAddress([
-      {
-        name: values.name,
-        type: values.type,
-        street: values.street,
-        city: values.city,
-        state: values.state,
-        zip_code: values.zipCode,
-        country: values.country,
-        profile_id: user.id,
-      },
-    ]);
+    // await createAddress([
+    //   {
+    //     name: values.name,
+    //     type: values.type,
+    //     street: values.street,
+    //     city: values.city,
+    //     state: values.state,
+    //     zip_code: values.zipCode,
+    //     country: values.country,
+    //     profile_id: user.id,
+    //   },
+    // ]);
 
     onClose();
     form.reset();
@@ -147,18 +121,18 @@ export default function AddressManagement() {
   };
 
   const handleEditAddress = async (values: AddressFormValues) => {
-    if (!currentAddress) return;
+    // if (!currentAddress) return;
 
-    await updateAddress({
-      id: currentAddress.id,
-      name: values.name,
-      type: values.type as AddressType,
-      street: values.street,
-      city: values.city,
-      state: values.state,
-      zip_code: values.zipCode,
-      country: values.country,
-    });
+    // await updateAddress({
+    //   id: currentAddress.id,
+    //   name: values.name,
+    //   type: values.type as AddressType,
+    //   street: values.street,
+    //   city: values.city,
+    //   state: values.state,
+    //   zip_code: values.zipCode,
+    //   country: values.country,
+    // });
 
     onClose();
     form.reset();
@@ -170,7 +144,7 @@ export default function AddressManagement() {
   };
 
   const handleDeleteAddress = async (id: string) => {
-    await deleteAddress({ id });
+    // await deleteAddress({ id });
 
     toast({
       title: 'Address Deleted',
@@ -179,7 +153,7 @@ export default function AddressManagement() {
   };
 
   const handleSetPrimary = async (id: string) => {
-    await updateAddress({ id, is_primary: true });
+    // await updateAddress({ id, is_primary: true });
 
     toast({
       title: 'Primary Address Updated',
@@ -192,20 +166,20 @@ export default function AddressManagement() {
     onOpen();
   };
 
-  const openEditDialog = (address: Tables<'addresses'>) => {
-    setCurrentAddress(address);
-    form.reset({
-      name: address.name,
-      type: address.type as AddressType,
-      street: address.street,
-      city: address.city,
-      state: address.state,
-      zipCode: address.zip_code,
-      country: address.country,
-      isPrimary: address.is_primary,
-    });
-    onOpen();
-  };
+  // const openEditDialog = (address: Tables<'addresses'>) => {
+  //   setCurrentAddress(address);
+  //   form.reset({
+  //     name: address.name,
+  //     type: address.type as AddressType,
+  //     street: address.street,
+  //     city: address.city,
+  //     state: address.state,
+  //     zipCode: address.zip_code,
+  //     country: address.country,
+  //     isPrimary: address.is_primary,
+  //   });
+  //   onOpen();
+  // };
 
   const getAddressIcon = (type: AddressType) => {
     switch (type) {
@@ -219,7 +193,7 @@ export default function AddressManagement() {
     }
   };
 
-  const isEdit = !!currentAddress;
+  const isEdit = true;
 
   return (
     <div className='space-y-6'>
@@ -380,7 +354,7 @@ export default function AddressManagement() {
                   >
                     Cancel
                   </Button>
-                  <Button type='submit'>
+                  {/* <Button type='submit'>
                     {isPendingUpdate || isPendingCreate ? (
                       <>
                         <Loader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -389,14 +363,14 @@ export default function AddressManagement() {
                     ) : (
                       <>{isEdit ? 'Edit' : 'Save'} Address</>
                     )}
-                  </Button>
+                  </Button> */}
                 </DialogFooter>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
       </div>
-      {isLoading ? (
+      {/* {isLoading ? (
         <div className='grid gap-4 md:grid-cols-2'>
           <Skeleton className='w-full h-40' />
           <Skeleton className='w-full h-40' />
@@ -495,7 +469,7 @@ export default function AddressManagement() {
             </Button>
           </CardContent>
         </Card>
-      )}
+      )} */}
     </div>
   );
 }

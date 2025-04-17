@@ -17,17 +17,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { createClient } from '@/utils/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import {
-  useQuery,
-  useRevalidateTables,
-  useUpdateMutation,
-} from '@supabase-cache-helpers/postgrest-react-query';
 import { cn } from '@/lib/utils';
-import { getDisplayName } from '@/utils/get-display-name';
-import { useUpload } from '@supabase-cache-helpers/storage-react-query';
-import { nanoid } from 'nanoid';
 import {
   Select,
   SelectContent,
@@ -43,9 +34,10 @@ import {
 import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { getProfileById } from '@/queries/profile/get-profile-by-id';
 import { FileUpload } from '@/components/upload/file-upload';
-import { useAuth } from '@/hooks/use-auth';
+import { useUserProfile } from '@/apis/users';
+import { useUpdateAvatar } from '@/apis/users/user-avatar';
+import { getUrl } from '@/utils/getUrl';
 
 const phoneRegex = /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g;
 
@@ -94,30 +86,16 @@ const profileFormSchema = z.object({
       message: 'Bio must not be longer than 160 characters.',
     })
     .optional(),
-  avatarUrl: z.string().optional(),
+  photoUrl: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileSettings() {
-  const { user } = useAuth();
-  const supabase = createClient();
+  const { data: profile } = useUserProfile();
+  const uploadAvatarMutation = useUpdateAvatar();
   const { toast } = useToast();
 
-  const revalidateTables = useRevalidateTables([
-    { schema: 'public', table: 'profiles' },
-  ]);
-  const { mutateAsync: upload } = useUpload(supabase.storage.from('avatars'), {
-    buildFileName: () => `${user?.id}/${nanoid()}`,
-  });
-
-  const { mutateAsync: update } = useUpdateMutation(
-    supabase.from('profiles'),
-    ['id'],
-    '*'
-  );
-
-  const { data: profile } = useQuery(getProfileById(supabase, user?.id ?? ''));
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileSelected, setFileSelected] = useState<File | null>(null);
@@ -130,7 +108,7 @@ export default function ProfileSettings() {
     phone: '',
     gender: undefined,
     dob: undefined,
-    avatarUrl: '',
+    photoUrl: '',
   };
 
   const form = useForm<ProfileFormValues>({
@@ -146,7 +124,7 @@ export default function ProfileSettings() {
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !profile) return;
 
     setIsUploading(true);
     setFileSelected(file);
@@ -158,59 +136,22 @@ export default function ProfileSettings() {
   }
 
   async function onSubmit(data: ProfileFormValues) {
-    if (!user) return;
+    if (!data) return;
 
     try {
-      let payload = {
-        id: user.id,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        bio: data.bio,
-        gender: data.gender,
-        avatar_url: profile?.avatar_url,
-        phone: data.phone,
-        email: data.email,
-        dob: data.dob ? data.dob.toISOString().split('T')[0] : null,
-      };
-
       if (fileSelected) {
-        const response = await upload({
-          files: [fileSelected],
+        await uploadAvatarMutation.mutateAsync({
+          avatar: fileSelected,
         });
 
-        const { data: dataUpload, error: errorUpload } = response[0];
-        if (errorUpload) {
-          toast({
-            title: 'Upload failed',
-            variant: 'destructive',
-            description:
-              errorUpload.message ??
-              'An error occurred while uploading your avatar.',
-          });
-          return;
-        }
+        form.reset(defaultValues);
+        setFileSelected(null);
 
-        const { data: urlData } = await supabase.storage
-          .from('avatars')
-          .getPublicUrl(dataUpload.path);
-
-        payload = {
-          ...payload,
-          avatar_url: urlData.publicUrl,
-        };
+        toast({
+          title: 'Profile updated',
+          description: 'Your profile has been updated.',
+        });
       }
-
-      await update(payload);
-
-      form.reset(defaultValues);
-      setFileSelected(null);
-
-      await revalidateTables();
-
-      toast({
-        title: 'Profile updated',
-        description: 'Your profile has been updated.',
-      });
     } catch (error) {
       toast({
         title: 'Update failed',
@@ -223,14 +164,14 @@ export default function ProfileSettings() {
 
   useEffect(() => {
     form.reset({
-      firstName: profile?.first_name,
-      lastName: profile?.last_name,
-      gender: profile?.gender,
-      avatarUrl: profile?.avatar_url,
+      firstName: profile?.firstName ?? '',
+      lastName: profile?.lastName ?? '',
+      gender: profile?.gender ?? 'OTHER',
+      photoUrl: profile?.photoUrl ?? '',
       email: profile?.email,
-      phone: profile?.phone,
-      bio: profile?.bio,
-      dob: profile?.dob ? new Date(profile?.dob) : undefined,
+      phone: profile?.phoneNumber ?? '',
+      bio: '',
+      dob: profile?.dob ? new Date(profile.dob) : undefined,
     });
   }, [profile]);
 
@@ -247,12 +188,12 @@ export default function ProfileSettings() {
               src={
                 fileSelected
                   ? URL.createObjectURL(fileSelected)
-                  : String(profile?.avatar_url)
+                  : getUrl(profile?.photoUrl ?? '')
               }
-              alt={getDisplayName(profile)}
+              alt={`${profile?.firstName} ${profile?.lastName}`}
             />
             <AvatarFallback className='text-3xl'>
-              {getDisplayName(profile)[0]}
+              {`${profile?.firstName} ${profile?.lastName}`}
             </AvatarFallback>
           </Avatar>
         </div>

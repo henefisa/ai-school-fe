@@ -28,6 +28,7 @@ import { getError } from '@/utils/getError';
 import { Gender } from '@/types/profile';
 import { STUDENTS_KEYS } from '@/apis/students/keys';
 import { getAddress } from '@/utils/get-address';
+import { getUrl } from '@/utils/getUrl';
 
 export enum StudentDetailTab {
   Courses = 'courses',
@@ -131,7 +132,7 @@ export default function StudentDetailPage({
               <div className='flex flex-col items-center gap-4 text-center'>
                 <Avatar className='h-24 w-24'>
                   <AvatarImage
-                    src={data?.user.photoUrl ?? ''}
+                    src={getUrl(data?.user.photoUrl ?? '')}
                     alt={getDisplayName(data)}
                   />
                   <AvatarFallback>

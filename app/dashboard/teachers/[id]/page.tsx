@@ -36,6 +36,7 @@ import { useGetTeacher } from '@/apis/teachers/get-teacher';
 import { getDisplayName } from '@/utils/get-display-name';
 import { format } from 'date-fns';
 import { getAddress } from '@/utils/get-address';
+import { getUrl } from '@/utils/getUrl';
 
 export default function TeacherDetailPage({
   params,
@@ -222,7 +223,7 @@ export default function TeacherDetailPage({
               <div className='flex flex-col items-center gap-4 text-center'>
                 <Avatar className='h-24 w-24'>
                   <AvatarImage
-                    src={data.user.photoUrl ?? ''}
+                    src={getUrl(data.user.photoUrl ?? '')}
                     alt={getDisplayName(data)}
                   />
                   <AvatarFallback>{getDisplayName(data)}</AvatarFallback>
@@ -230,7 +231,7 @@ export default function TeacherDetailPage({
                 <div>
                   <h2 className='text-xl font-bold'>{getDisplayName(data)}</h2>
                   <p className='text-muted-foreground'>
-                    {data.departments[0].name}
+                    {data.departments[0]?.name}
                   </p>
                   <Badge
                     className='mt-2'
