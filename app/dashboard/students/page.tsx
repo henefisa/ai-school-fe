@@ -7,6 +7,7 @@ import {
   useListStudents,
 } from '@/apis/students/list-students';
 import { StudentInfo } from '@/apis/students/type';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -44,12 +45,32 @@ import {
 } from '@/components/ui/table';
 import useDebounce from '@/hooks/use-debounce';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 import { getDisplayName } from '@/utils/get-display-name';
 import { getError } from '@/utils/getError';
-import { Download, Eye, PlusCircle, Search, Trash } from 'lucide-react';
+import { getUrl } from '@/utils/getUrl';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Download,
+  Eye,
+  PlusCircle,
+  Search,
+  Trash,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+
+type SortField =
+  | 'name'
+  | 'grade'
+  | 'gender'
+  | 'status'
+  | 'attendance'
+  | 'avgGrade'
+  | null;
+type SortDirection = 'asc' | 'desc';
 
 export default function StudentsPage() {
   const { toast } = useToast();
@@ -60,6 +81,9 @@ export default function StudentsPage() {
     StudentStatusFilter.ALL
   );
   const pageSize = 10;
+
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const getStatusBoolean = () => {
     if (statusFilter === StudentStatusFilter.ACTIVE) return true;
@@ -83,6 +107,47 @@ export default function StudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<StudentInfo>();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const totalPages = useMemo(() => Math.ceil((data?.count || 0) / 10), [data]);
+
+  const sortedStudents = useMemo(() => {
+    if (!data?.results || !sortField) return data?.results;
+
+    return [...data.results].sort((a, b) => {
+      let valueA, valueB;
+
+      switch (sortField) {
+        case 'name':
+          valueA = getDisplayName(a).toLowerCase();
+          valueB = getDisplayName(b).toLowerCase();
+          break;
+        case 'grade':
+          valueA = a.grade || '';
+          valueB = b.grade || '';
+          break;
+        case 'gender':
+          valueA = a.gender || '';
+          valueB = b.gender || '';
+          break;
+        case 'status':
+          valueA = a.deletedAt ? 'inactive' : 'active';
+          valueB = b.deletedAt ? 'inactive' : 'active';
+          break;
+        case 'attendance':
+          valueA = '95%';
+          valueB = '95%';
+          break;
+        case 'avgGrade':
+          valueA = 'A';
+          valueB = 'A';
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data?.results, sortField, sortDirection]);
 
   const handleDeleteClick = (student: StudentInfo) => {
     setSelectedStudent(student);
@@ -115,6 +180,42 @@ export default function StudentsPage() {
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortableTableHead = ({
+    field,
+    children,
+  }: {
+    field: SortField;
+    children: React.ReactNode;
+  }) => (
+    <TableHead
+      className='cursor-pointer hover:bg-muted/50 transition-colors'
+      onClick={() => handleSort(field)}
+    >
+      <div className='flex items-center'>
+        {children}
+        {sortField === field && (
+          <span className='ml-2'>
+            {sortDirection === 'asc' ? (
+              <ArrowUpIcon className='h-4 w-4' />
+            ) : (
+              <ArrowDownIcon className='h-4 w-4' />
+            )}
+          </span>
+        )}
+      </div>
+    </TableHead>
+  );
+
   return (
     <div className='space-y-6'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
@@ -131,6 +232,7 @@ export default function StudentsPage() {
           </Button>
         </Link>
       </div>
+
       <Card>
         <CardHeader className='pb-3'>
           <CardTitle>Student Filters</CardTitle>
@@ -182,6 +284,7 @@ export default function StudentsPage() {
           </div>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader className='flex flex-row items-center justify-between'>
           <CardTitle>Students List</CardTitle>
@@ -194,12 +297,16 @@ export default function StudentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Attendance</TableHead>
-                <TableHead>Avg. Grade</TableHead>
+                <SortableTableHead field='name'>Name</SortableTableHead>
+                <SortableTableHead field='grade'>Grade</SortableTableHead>
+                <SortableTableHead field='gender'>Gender</SortableTableHead>
+                <SortableTableHead field='status'>Status</SortableTableHead>
+                <SortableTableHead field='attendance'>
+                  Attendance
+                </SortableTableHead>
+                <SortableTableHead field='avgGrade'>
+                  Avg. Grade
+                </SortableTableHead>
                 <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -230,52 +337,71 @@ export default function StudentsPage() {
                     </TableCell>
                   </TableRow>
                 ))
-              ) : data?.results.length ? (
-                data.results.map((student) => (
+              ) : sortedStudents && sortedStudents.length ? (
+                sortedStudents.map((student) => (
                   <TableRow key={student.id}>
-                    <TableCell className='font-medium'>
-                      {getDisplayName(student)}
+                    <TableCell>
+                      <div className='flex items-center gap-3'>
+                        <Avatar className={cn('size-14')}>
+                          <AvatarImage
+                            src={getUrl(student.user?.photoUrl ?? '')}
+                            alt={getDisplayName(student)}
+                          />
+                          <AvatarFallback className='text-center text-sm'>
+                            {getDisplayName(student)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <p className='font-medium'>{getDisplayName(student)}</p>
+                      </div>
                     </TableCell>
                     <TableCell>{student.grade}</TableCell>
-                    <TableCell>{student.gender}</TableCell>
+                    <TableCell>
+                      {student.gender
+                        ? student.gender.charAt(0).toUpperCase() +
+                          student.gender.slice(1).toLowerCase()
+                        : ''}
+                    </TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          student.id
+                          !student.deletedAt
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {student.id ? 'Active' : 'Inactive'}
+                        {!student.deletedAt ? 'Active' : 'Inactive'}
                       </span>
                     </TableCell>
                     <TableCell>95%</TableCell>
                     <TableCell>A</TableCell>
-                    <TableCell className='text-right flex gap-2 justify-end'>
-                      <Link href={`students/${student.id}`}>
-                        <Button variant='default' size='sm'>
-                          <Eye />
+                    <TableCell className='text-right'>
+                      <div className='flex gap-2 justify-end'>
+                        <Link href={`students/${student.id}`}>
+                          <Button variant='default' size='sm'>
+                            <Eye />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant='destructive'
+                          size='sm'
+                          onClick={() => handleDeleteClick(student)}
+                        >
+                          <Trash />
                         </Button>
-                      </Link>
-                      <Button
-                        variant='destructive'
-                        size='sm'
-                        onClick={() => handleDeleteClick(student)}
-                      >
-                        <Trash />
-                      </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className='h-24 text-center'>
+                  <TableCell colSpan={8} className='h-24 text-center'>
                     No students found.
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+
           {data && data.count > 0 && (
             <div className='mt-4 flex justify-center'>
               <Pagination>
@@ -321,6 +447,7 @@ export default function StudentsPage() {
             </div>
           )}
         </CardContent>
+
         <Dialog open={showConfirmDelete} onOpenChange={setShowConfirmDelete}>
           <DialogContent>
             <DialogHeader>

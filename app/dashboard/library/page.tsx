@@ -31,7 +31,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { BookOpenIcon, SearchIcon, BookIcon, FileTextIcon } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/use-auth';
+import { useUserProfile } from '@/apis/users';
+import { Role } from '@/types/role';
 
 // Mock data for books
 const books = [
@@ -154,7 +155,7 @@ const categories = [
 ];
 
 export default function LibraryPage() {
-  const { user } = useAuth();
+  const { data } = useUserProfile();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [activeTab, setActiveTab] = useState('books');
@@ -240,7 +241,7 @@ export default function LibraryPage() {
               ))}
             </SelectContent>
           </Select>
-          {(user?.role === 'admin' || user?.role === 'librarian') && (
+          {data?.role === Role.Admin && (
             <Button asChild>
               <Link href='/dashboard/library/manage'>Manage Library</Link>
             </Button>

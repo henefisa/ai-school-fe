@@ -10,6 +10,8 @@ import {
   Eye,
   Trash,
   Download,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +49,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { RoomResponse, RoomStatus } from '@/apis/rooms/type';
+import { RoomResponse, RoomStatus, SortField } from '@/apis/rooms/type';
 import { useListRooms } from '@/apis/rooms/list-rooms';
 import { useDeleteRoom } from '@/apis/rooms/delete';
 import { getError } from '@/utils/getError';
@@ -56,6 +58,7 @@ import {
   roomTypeOptions,
   statusOptions,
 } from '@/components/rooms/create/basic-info-tab';
+import { SortOrder } from '@/apis/courses/type';
 
 export default function RoomsPage() {
   const { toast } = useToast();
@@ -65,6 +68,9 @@ export default function RoomsPage() {
   const [selectedRoom, setSelectedRoom] = useState<RoomResponse>();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const pageSize = 10;
+
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortOrder>('ASC');
 
   const getStatusFilter = () => {
     if (statusFilter === 'all') return undefined;
@@ -76,6 +82,8 @@ export default function RoomsPage() {
     pageSize,
     name: searchQuery,
     status: getStatusFilter(),
+    sortBy: sortField,
+    sortOrder: sortDirection,
   };
 
   const { data, isLoading } = useListRooms(filter);
@@ -109,6 +117,42 @@ export default function RoomsPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      setSortField(field);
+      setSortDirection('ASC');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortableTableHead = ({
+    field,
+    children,
+  }: {
+    field: SortField;
+    children: React.ReactNode;
+  }) => (
+    <TableHead
+      className='cursor-pointer hover:bg-muted/50 transition-colors'
+      onClick={() => handleSort(field)}
+    >
+      <div className='flex items-center'>
+        {children}
+        {sortField === field && (
+          <span className='ml-2'>
+            {sortDirection === 'ASC' ? (
+              <ArrowUp className='h-4 w-4' />
+            ) : (
+              <ArrowDown className='h-4 w-4' />
+            )}
+          </span>
+        )}
+      </div>
+    </TableHead>
+  );
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -205,12 +249,20 @@ export default function RoomsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Room</TableHead>
-                      <TableHead>Building</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Capacity</TableHead>
+                      <SortableTableHead field='name'>Room</SortableTableHead>
+                      <SortableTableHead field='building'>
+                        Building
+                      </SortableTableHead>
+                      <SortableTableHead field='roomType'>
+                        Type
+                      </SortableTableHead>
+                      <SortableTableHead field='capacity'>
+                        Capacity
+                      </SortableTableHead>
                       <TableHead>Features</TableHead>
-                      <TableHead>Status</TableHead>
+                      <SortableTableHead field='status'>
+                        Status
+                      </SortableTableHead>
                       <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -271,19 +323,21 @@ export default function RoomsPage() {
                               }
                             </Badge>
                           </TableCell>
-                          <TableCell className='text-right flex gap-2 justify-end'>
-                            <Link href={`rooms/${room.id}`}>
-                              <Button variant='default' size='sm'>
-                                <Eye />
+                          <TableCell className='text-right'>
+                            <div className='flex gap-2'>
+                              <Link href={`rooms/${room.id}`}>
+                                <Button variant='default' size='sm'>
+                                  <Eye />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant='destructive'
+                                size='sm'
+                                onClick={() => handleDeleteClick(room)}
+                              >
+                                <Trash />
                               </Button>
-                            </Link>
-                            <Button
-                              variant='destructive'
-                              size='sm'
-                              onClick={() => handleDeleteClick(room)}
-                            >
-                              <Trash />
-                            </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

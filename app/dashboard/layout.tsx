@@ -7,16 +7,12 @@ import { BellIcon, MenuIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { RoleSwitcher } from '@/components/role-switcher';
 import { Profile } from '@/components/header/profile';
-import { useStoreContext } from '@/contexts/store';
-import { Role } from '@/types/role';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const role = useStoreContext((state) => state.userRole.role);
-
   return (
     <div className='flex min-h-screen flex-col'>
       <header className='sticky top-0 z-40 border-b bg-background'>
@@ -30,7 +26,7 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='w-72 p-0'>
-                <DashboardSidebar role={(role ?? Role.Admin) as Role} />
+                <DashboardSidebar />
               </SheetContent>
             </Sheet>
             <span className='text-lg font-bold'>EduManage</span>
@@ -50,7 +46,7 @@ export default function DashboardLayout({
       </header>
       <div className='flex flex-1'>
         <aside className='hidden w-64 border-r md:block'>
-          <DashboardSidebar role={Role.Admin} />
+          <DashboardSidebar />
         </aside>
         <main className='flex-1 overflow-auto p-4 md:p-6'>{children}</main>
       </div>

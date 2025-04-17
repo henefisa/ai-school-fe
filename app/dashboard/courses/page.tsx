@@ -9,6 +9,8 @@ import {
   Download,
   Eye,
   Trash,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -39,7 +41,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { CourseResponse, CourseStatus } from '@/apis/courses/type';
+import {
+  CourseResponse,
+  CourseStatus,
+  SortField,
+  SortOrder,
+} from '@/apis/courses/type';
 import {
   CourseStatusFilter,
   useListCourses,
@@ -66,6 +73,9 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState<CourseResponse>();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortOrder>('ASC');
+
   const pageSize = 10;
 
   const getStatus = () => {
@@ -76,8 +86,10 @@ export default function CoursesPage() {
   const filter = {
     page: currentPage,
     pageSize,
-    name: debouncedSearchQuery,
+    name: debouncedSearchQuery ? debouncedSearchQuery : undefined,
     status: getStatus(),
+    sortBy: sortField,
+    sortOrder: sortField ? sortDirection : null,
   };
 
   const { data, isLoading } = useListCourses(filter);
@@ -120,6 +132,42 @@ export default function CoursesPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'ASC' ? 'DESC' : 'ASC');
+    } else {
+      setSortField(field);
+      setSortDirection('ASC');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortableTableHead = ({
+    field,
+    children,
+  }: {
+    field: SortField;
+    children: React.ReactNode;
+  }) => (
+    <TableHead
+      className='cursor-pointer hover:bg-muted/50 transition-colors'
+      onClick={() => handleSort(field)}
+    >
+      <div className='flex items-center'>
+        {children}
+        {sortField === field && (
+          <span className='ml-2'>
+            {sortDirection === 'ASC' ? (
+              <ArrowUp className='h-4 w-4' />
+            ) : (
+              <ArrowDown className='h-4 w-4' />
+            )}
+          </span>
+        )}
+      </div>
+    </TableHead>
+  );
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -214,12 +262,22 @@ export default function CoursesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Course Name</TableHead>
-                      <TableHead>Code</TableHead>
-                      <TableHead>Credits</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Required</TableHead>
-                      <TableHead>Status</TableHead>
+                      <SortableTableHead field='name'>
+                        Course Name
+                      </SortableTableHead>
+                      <SortableTableHead field='code'>Code</SortableTableHead>
+                      <SortableTableHead field='credits'>
+                        Credits
+                      </SortableTableHead>
+                      <SortableTableHead field='departmentId'>
+                        Department
+                      </SortableTableHead>
+                      <SortableTableHead field='required'>
+                        Required
+                      </SortableTableHead>
+                      <SortableTableHead field='status'>
+                        Status
+                      </SortableTableHead>
                       <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -251,11 +309,17 @@ export default function CoursesPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className='text-right flex gap-2 justify-end'>
-                            <Link href={`courses/${course.id}`}>
-                              <Button variant='default' size='sm'>
+                            {course.id ? (
+                              <Link href={`courses/${course.id}`}>
+                                <Button variant='default' size='sm'>
+                                  <Eye />
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Button variant='default' size='sm' disabled>
                                 <Eye />
                               </Button>
-                            </Link>
+                            )}
                             <Button
                               variant='destructive'
                               size='sm'

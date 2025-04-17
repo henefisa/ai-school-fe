@@ -142,7 +142,8 @@ export function ScheduleTab({ form }: ScheduleTabProps) {
               </Alert>
             )}
 
-            {form.watch(`operationalHours.${day}`)?.length === 0 ? (
+            {!form.watch(`operationalHours.${day}`) ||
+            form.watch(`operationalHours.${day}`).length === 0 ? (
               <p className='text-sm text-muted-foreground'>
                 No operational hours set for this day.
               </p>

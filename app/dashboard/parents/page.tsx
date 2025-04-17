@@ -1,7 +1,6 @@
 'use client';
 
 import type React from 'react';
-
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -13,6 +12,8 @@ import {
   Download,
   Eye,
   Trash,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,12 @@ import {
 } from '@/components/ui/dialog';
 import { getDisplayName } from '@/utils/get-display-name';
 import { getError } from '@/utils/getError';
+import { cn } from '@/lib/utils';
+import { getUrl } from '@/utils/getUrl';
+import useDebounce from '@/hooks/use-debounce';
+
+type SortField = 'name' | 'email' | 'occupation' | 'children' | 'status' | null;
+type SortDirection = 'asc' | 'desc';
 
 export default function ParentsPage() {
   const { toast } = useToast();
@@ -68,6 +75,9 @@ export default function ParentsPage() {
   );
   const pageSize = 10;
 
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
   const getStatusBoolean = () => {
     if (statusFilter === ParentStatusFilter.ACTIVE) return true;
     if (statusFilter === ParentStatusFilter.INACTIVE) return false;
@@ -77,25 +87,54 @@ export default function ParentsPage() {
   const [selectedParent, setSelectedParent] = useState<ParentInfo>();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
-  const { data, isLoading } = useListParents({
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const filter = {
     page: currentPage,
     pageSize,
-    q: searchQuery,
+    q: debouncedSearchQuery,
     status: getStatusBoolean(),
-  });
+    // sortBy: sortField,
+    // sortDirection: sortDirection,
+  };
+
+  const { data, isLoading } = useListParents(filter);
 
   const deleteParentMutation = useDeleteParent({
-    queryKey: PARENTS_KEYS.listParents({
-      page: currentPage,
-      pageSize,
-      q: searchQuery,
-    }),
+    queryKey: PARENTS_KEYS.listParents(filter),
   });
+
+  const sortedData = useMemo(() => {
+    if (!data?.results || !sortField) return data?.results;
+
+    return [...data.results].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case 'name':
+          comparison = getDisplayName(a).localeCompare(getDisplayName(b));
+          break;
+        case 'email':
+          comparison = (a.email || '').localeCompare(b.email || '');
+          break;
+        case 'occupation':
+          comparison = (a.occupation || '').localeCompare(b.occupation || '');
+          break;
+        case 'children':
+          comparison = 0;
+          break;
+        case 'status':
+          comparison = (a.deletedAt ? 1 : 0) - (b.deletedAt ? 1 : 0);
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [data?.results, sortField, sortDirection]);
 
   const totalPages = useMemo(() => Math.ceil((data?.count || 0) / 10), [data]);
 
-  const handleDeleteClick = (teacher: ParentInfo) => {
-    setSelectedParent(teacher);
+  const handleDeleteClick = (parent: ParentInfo) => {
+    setSelectedParent(parent);
     setShowConfirmDelete(true);
   };
 
@@ -123,6 +162,42 @@ export default function ParentsPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortableTableHead = ({
+    field,
+    children,
+  }: {
+    field: SortField;
+    children: React.ReactNode;
+  }) => (
+    <TableHead
+      className='cursor-pointer hover:bg-muted/50 transition-colors'
+      onClick={() => handleSort(field)}
+    >
+      <div className='flex items-center'>
+        {children}
+        {sortField === field && (
+          <span className='ml-2'>
+            {sortDirection === 'asc' ? (
+              <ArrowUp className='h-4 w-4' />
+            ) : (
+              <ArrowDown className='h-4 w-4' />
+            )}
+          </span>
+        )}
+      </div>
+    </TableHead>
+  );
 
   return (
     <div className='space-y-6'>
@@ -205,43 +280,42 @@ export default function ParentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Occupation</TableHead>
-                    <TableHead>Children</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead field='name'>Parent</SortableTableHead>
+                    <SortableTableHead field='email'>Contact</SortableTableHead>
+                    <SortableTableHead field='occupation'>
+                      Occupation
+                    </SortableTableHead>
+                    <SortableTableHead field='children'>
+                      Children
+                    </SortableTableHead>
+                    <SortableTableHead field='status'>Status</SortableTableHead>
                     <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.results.length === 0 ? (
+                  {!sortedData || sortedData?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className='h-24 text-center'>
                         No parents found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    data?.results.map((parent: ParentInfo) => (
+                    sortedData?.map((parent: ParentInfo) => (
                       <TableRow key={parent.id}>
                         <TableCell>
                           <div className='flex items-center gap-3'>
-                            <Avatar>
+                            <Avatar className={cn('size-14')}>
                               <AvatarImage
-                                src={`/placeholder.svg?height=40&width=40`}
+                                src={getUrl(parent.user?.photoUrl ?? '')}
                                 alt={getDisplayName(parent)}
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className='text-sm text-center'>
                                 {getDisplayName(parent)}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className='font-medium'>
-                                {getDisplayName(parent)}
-                              </p>
-                              <p className='text-sm text-muted-foreground'>
-                                {parent.id}
-                              </p>
-                            </div>
+                            <p className='font-medium'>
+                              {getDisplayName(parent)}
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -271,19 +345,27 @@ export default function ParentsPage() {
                             {parent.deletedAt ? 'Inactive' : 'Active'}
                           </Badge>
                         </TableCell>
-                        <TableCell className='text-right flex gap-2 justify-end'>
-                          <Link href={`parents/${parent.id}`}>
-                            <Button variant='default' size='sm'>
-                              <Eye />
+                        <TableCell className='text-right'>
+                          <div className='flex gap-2 justify-end'>
+                            {parent.id ? (
+                              <Link href={`parents/${parent.id}`}>
+                                <Button variant='default' size='sm'>
+                                  <Eye />
+                                </Button>
+                              </Link>
+                            ) : (
+                              <Button variant='default' size='sm' disabled>
+                                <Eye />
+                              </Button>
+                            )}
+                            <Button
+                              variant='destructive'
+                              size='sm'
+                              onClick={() => handleDeleteClick(parent)}
+                            >
+                              <Trash />
                             </Button>
-                          </Link>
-                          <Button
-                            variant='destructive'
-                            size='sm'
-                            onClick={() => handleDeleteClick(parent)}
-                          >
-                            <Trash />
-                          </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
