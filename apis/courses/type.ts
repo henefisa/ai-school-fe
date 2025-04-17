@@ -5,12 +5,26 @@ export enum CourseStatus {
   INACTIVE = 'INACTIVE',
 }
 
+export type SortField =
+  | 'name'
+  | 'code'
+  | 'credits'
+  | 'departmentId'
+  | 'required'
+  | 'status'
+  | null;
+
+export type SortOrder = 'ASC' | 'DESC' | null;
+
 export interface FilterCourse {
   page: number;
   pageSize: number;
-  name: string;
+  name?: string;
   status: string;
+  sortBy: SortField;
+  sortOrder: SortOrder;
 }
+
 export interface CoursePayload {
   name: string;
   code: string;

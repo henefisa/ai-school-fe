@@ -12,6 +12,8 @@ import {
   Eye,
   Trash,
   Download,
+  ArrowDown,
+  ArrowUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +61,11 @@ import {
 } from '@/components/ui/dialog';
 import { getError } from '@/utils/getError';
 import useDebounce from '@/hooks/use-debounce';
+import { getUrl } from '@/utils/getUrl';
+import { cn } from '@/lib/utils';
+
+type SortField = 'name' | 'department' | 'email' | 'hireDate' | 'status' | null;
+type SortDirection = 'asc' | 'desc';
 
 export default function TeachersPage() {
   const { toast } = useToast();
@@ -68,6 +75,9 @@ export default function TeachersPage() {
     TeacherStatusFilter.ALL
   );
   const pageSize = 10;
+
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const getStatusBoolean = () => {
     if (statusFilter === TeacherStatusFilter.ACTIVE) return true;
@@ -80,20 +90,56 @@ export default function TeachersPage() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data, isLoading } = useListTeachers({
+  const filter = {
     page: currentPage,
     pageSize,
     q: debouncedSearchQuery,
     status: getStatusBoolean(),
-  });
+    // sortBy: sortField,
+    // sortDirection: sortDirection,
+  };
+  const { data, isLoading } = useListTeachers(filter);
 
   const deleteTeacherMutation = useDeleteTeacher({
-    queryKey: TEACHERS_KEYS.listTeachers({
-      page: currentPage,
-      pageSize,
-      q: debouncedSearchQuery,
-    }),
+    queryKey: TEACHERS_KEYS.listTeachers(filter),
   });
+
+  const sortedTeachers = useMemo(() => {
+    if (!data?.results || !sortField) return data?.results;
+
+    return [...data.results].sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      switch (sortField) {
+        case 'name':
+          valueA = getDisplayName(a).toLowerCase();
+          valueB = getDisplayName(b).toLowerCase();
+          break;
+        case 'department':
+          valueA = a.departments[0]?.name?.toLowerCase() || '';
+          valueB = b.departments[0]?.name?.toLowerCase() || '';
+          break;
+        case 'email':
+          valueA = a.email?.toLowerCase() || '';
+          valueB = b.email?.toLowerCase() || '';
+          break;
+        case 'hireDate':
+          valueA = new Date(a.hireDate).getTime();
+          valueB = new Date(b.hireDate).getTime();
+          break;
+        case 'status':
+          valueA = a.deletedAt ? 'inactive' : 'active';
+          valueB = b.deletedAt ? 'inactive' : 'active';
+          break;
+        default:
+          return 0;
+      }
+
+      const compareResult = valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
+      return sortDirection === 'asc' ? compareResult : -compareResult;
+    });
+  }, [data?.results, sortField, sortDirection]);
 
   const totalPages = useMemo(
     () => Math.ceil((data?.count || 0) / pageSize),
@@ -129,6 +175,42 @@ export default function TeachersPage() {
     setSelectedTeacher(teacher);
     setShowConfirmDelete(true);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortableTableHead = ({
+    field,
+    children,
+  }: {
+    field: SortField;
+    children: React.ReactNode;
+  }) => (
+    <TableHead
+      className='cursor-pointer hover:bg-muted/50 transition-colors'
+      onClick={() => handleSort(field)}
+    >
+      <div className='flex items-center'>
+        {children}
+        {sortField === field && (
+          <span className='ml-2'>
+            {sortDirection === 'asc' ? (
+              <ArrowUp className='h-4 w-4' />
+            ) : (
+              <ArrowDown className='h-4 w-4' />
+            )}
+          </span>
+        )}
+      </div>
+    </TableHead>
+  );
 
   return (
     <div className='space-y-6'>
@@ -211,32 +293,36 @@ export default function TeachersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Hire Date</TableHead>
-                    <TableHead>Status</TableHead>
+                    <SortableTableHead field='name'>Teacher</SortableTableHead>
+                    <SortableTableHead field='department'>
+                      Department
+                    </SortableTableHead>
+                    <SortableTableHead field='email'>Email</SortableTableHead>
+                    <SortableTableHead field='hireDate'>
+                      Hire Date
+                    </SortableTableHead>
+                    <SortableTableHead field='status'>Status</SortableTableHead>
                     <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.results.length === 0 ? (
+                  {!sortedTeachers || sortedTeachers?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className='h-24 text-center'>
                         No teachers found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    data?.results.map((teacher) => (
+                    sortedTeachers?.map((teacher) => (
                       <TableRow key={teacher.id}>
                         <TableCell>
                           <div className='flex items-center gap-3'>
-                            <Avatar>
+                            <Avatar className={cn('size-14')}>
                               <AvatarImage
-                                src={`/placeholder.svg?height=40&width=40`}
+                                src={getUrl(teacher.user?.photoUrl ?? '')}
                                 alt={getDisplayName(teacher)}
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className='text-center text-sm'>
                                 {getDisplayName(teacher)}
                               </AvatarFallback>
                             </Avatar>
@@ -259,19 +345,21 @@ export default function TeachersPage() {
                             {teacher.deletedAt ? 'Inactive' : 'Active'}
                           </Badge>
                         </TableCell>
-                        <TableCell className='text-right flex gap-2 justify-end'>
-                          <Link href={`teachers/${teacher.id}`}>
-                            <Button variant='default' size='sm'>
-                              <Eye />
+                        <TableCell className='text-right'>
+                          <div className='flex gap-2 justify-end'>
+                            <Link href={`teachers/${teacher.id}`}>
+                              <Button variant='default' size='sm'>
+                                <Eye />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant='destructive'
+                              size='sm'
+                              onClick={() => handleDeleteClick(teacher)}
+                            >
+                              <Trash />
                             </Button>
-                          </Link>
-                          <Button
-                            variant='destructive'
-                            size='sm'
-                            onClick={() => handleDeleteClick(teacher)}
-                          >
-                            <Trash />
-                          </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

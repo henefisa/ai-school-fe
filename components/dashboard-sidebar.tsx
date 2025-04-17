@@ -26,10 +26,9 @@ import {
   School,
 } from 'lucide-react';
 import { Role } from '@/types/role';
+import { useStoreContext } from '@/contexts/store';
 
-interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {
-  role: Role;
-}
+interface SidebarNavProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 interface NavItem {
   name: string;
@@ -38,12 +37,9 @@ interface NavItem {
   type?: 'separator';
 }
 
-export function DashboardSidebar({
-  className,
-  role,
-  ...props
-}: SidebarNavProps) {
+export function DashboardSidebar({ className, ...props }: SidebarNavProps) {
   const pathname = usePathname();
+  const role = useStoreContext((state) => state.userRole.role) as Role;
 
   // Define navigation items based on user role
   const getNavItems = () => {

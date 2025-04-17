@@ -1,3 +1,5 @@
+import { SortOrder } from '@/apis/courses/type';
+
 export enum RoomType {
   CLASS_ROOM = 'CLASS_ROOM',
   LAB = 'LAB',
@@ -27,11 +29,21 @@ export interface OperationalHours {
   sunday: TimeSlot[];
 }
 
+export type SortField =
+  | 'name'
+  | 'building'
+  | 'roomType'
+  | 'capacity'
+  | 'status'
+  | null;
+
 export interface FilterRoom {
   page: number;
   pageSize: number;
   name: string;
   status?: RoomStatus;
+  sortBy: SortField;
+  sortOrder: SortOrder;
 }
 
 export interface RoomPayload {

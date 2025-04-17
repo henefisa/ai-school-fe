@@ -44,6 +44,7 @@ import {
   roomTypeOptions,
   statusOptions,
 } from '@/components/rooms/create/basic-info-tab';
+import { getError } from '@/utils/getError';
 
 export default function RoomDetailPage({
   params,
@@ -74,7 +75,8 @@ export default function RoomDetailPage({
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to delete room. Please try again.',
+        description:
+          getError(error) ?? 'Failed to delete room. Please try again.',
         variant: 'destructive',
       });
     } finally {
